@@ -12,3 +12,14 @@
 	(apply union (for [css-selector ["div.leftColumn table strong a" 
                                   "div.rightColumn table strong a"]]
   					(get-race-urls-from-selector page-f css-selector))))
+
+(defn get-race [race-page]
+  (let [race (race-page)]
+	{:venue (.text
+		(first 
+		(.select race
+         "h1 > span")))
+	:time (.text
+           (first
+           (.select race
+           	"h1 > strong")))}))

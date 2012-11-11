@@ -3,11 +3,33 @@
    				[org.jsoup.nodes Document]))
 
 
+(defn race-page []
+	(Jsoup/parse "<div class=\"leftCol\">
+    <h1 class=\"cardHeadline\">
+    <strong>12:45</strong>
+    <span>
+    Venue 1 </span>
+    <em>
+    HORSE RACING
+    TODAY </em>
+    </h1>
+
+    <!-- start race info -->
+    <h2 class=\"raceTitle\">
+    <strong>Oyster Pools And Jacuzzi Raglan Handicap Chase</strong>
+
+    (CLASS 4) (4yo+ 0-115) </h2>
+    <p class=\"raceShortInfo clearfix\">
+    <span>Winner: <strong>£3,899</strong></span>
+    <span>Runners: <strong>7</strong></span> <span>Distance: <strong>3m</strong></span> <span>Going: <strong>Soft </strong></span>
+    <span>Channel:
+    <em>ATR</em> </span> </p>
+    <!-- end race info -->
+    </div>"))
+
 (defn urls-page []
 	(Jsoup/parse "<div id=\"race_result\">
     <div class=\"clearfix\">
-
-
     <a href=\"#\" name=\"m1212\"></a><div class=\"leftColumn\">
  <div class=\"headlineBlock headlineBlockMap\">
  <div class=\"h\">
@@ -20,7 +42,6 @@
  <em>ATR </em>
     </div>
  </div>
-
     <table class=\"table \">
     <colgroup><col class=\"check\">
     <col class=\"time\">
