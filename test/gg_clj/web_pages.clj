@@ -21,7 +21,7 @@
     (CLASS 4) (4yo+ 0-115) </h2>
     <p class=\"raceShortInfo clearfix\">
     <span>Winner: <strong>£3,899</strong></span>
-    <span>Runners: <strong>7</strong></span> <span>Distance: <strong>3m</strong></span> <span>Going: <strong>Soft </strong></span>
+    <span>Runners: <strong>17</strong></span> <span>Distance: <strong>3m</strong></span> <span>Going: <strong>Soft </strong></span>
     <span>Channel:
     <em>ATR</em> </span> </p>
     <!-- end race info -->

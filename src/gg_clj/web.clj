@@ -13,6 +13,17 @@
                                   "div.rightColumn table strong a"]]
   					(get-race-urls-from-selector page-f css-selector))))
 
+(defn get-runners [race-page]
+
+(loop [info (.select (race-page) "p.raceShortInfo span")]
+;;  (print  (first(.textNodes info)))
+  (def span (first info))
+  (print span)
+  (print (.text (first (.textNodes span))))
+  (if (= "Runners: " (.text (first (.textNodes span))))
+    (.text (.select span "strong"))
+    (recur (rest info)))))
+
 (defn get-race [race-page]
   (let [race (race-page)]
 	{:venue (.text
@@ -22,4 +33,5 @@
 	:time (.text
            (first
            (.select race
-           	"h1 > strong")))}))
+           	"h1 > strong")))
+     :runners (get-runners race-page)}))

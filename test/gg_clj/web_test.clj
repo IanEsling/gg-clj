@@ -10,4 +10,5 @@
 (fact "race venue parsed from race page"
       (def race (get-race race-page))
       (:venue race) => "Venue 1"
-      (:time race) => "12:45")
+      (:time race) => "12:45"
+      (:runners race) => "17")
