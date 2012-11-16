@@ -37,7 +37,6 @@
 	(.textNodes
  	(first (.getElementsByTag betting-forecast "p"))))))
 
-
 (defn get-horse-names [betting-forecast]
 	(map (fn [a] (.text a))
 	(.select betting-forecast "p > a")))
@@ -48,18 +47,26 @@
 	(recur (rest odds) (rest names) 
            (conj coll {:name (first names) :odds (first odds)}))))
 
+(defn tips [race-page]
+	(reduce (fn [coll e]
+          (assoc coll (.text (.select e "td.h b"))
+                      (.text (.select e "div.tips"))))
+        {}
+	(.select (race-page) "table#sc_sortBlock > tbody")))
+
+(defn add-tips [horses race-page]
+	(map (fn [h] (assoc h :tips (Integer/valueOf (get (tips race-page) (.toUpperCase (:name h))))))
+		horses))
 
 (defn get-race [race-page]
   (let [race (race-page)
-        betting-forecast (first (.select (race-page) "div.info"))]
-	{:venue (.text
-		(first 
-		(.select race
-         "h1 > span")))
-	:time (.text
-           (first
-           (.select race
-           	"h1 > strong")))
+        betting-forecast (first (.select (race-page) "div.info"))
+        venue (.text (first (.select race "h1 > span")))
+        time (.text (first (.select race "h1 > strong")))]
+    (print "getting race details ")
+    (print venue time)
+	{:venue venue
+	:time time
     :runners (get-runners race-page)
-     :horses (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
-                   (get-favourites (.getElementsByTag betting-forecast "b")))}))
+     :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
+                   (get-favourites (.getElementsByTag betting-forecast "b"))) race-page)}))

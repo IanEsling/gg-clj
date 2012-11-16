@@ -17,3 +17,12 @@
 
 (defn get-all-race-urls []
 	(get-race-urls page))
+
+(defn race-pages []
+(for [url (get-all-race-urls)]
+  (get-race (fn [] 
+			  (.get 
+				(.timeout
+               (Jsoup/connect (str "http://betting.racingpost.com" url))
+                 60000)
+              )))))

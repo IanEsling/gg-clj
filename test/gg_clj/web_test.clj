@@ -16,11 +16,11 @@
 
 (fact "horses parsed from race page"
       (count (:horses race)) => 8
-		(:horses race) => (contains {:name "No Deal" :odds "7/4"} :in-any-order)
-		(:horses race) => (contains {:name "Cloud Creeper" :odds "9/4"} :in-any-order)
-		(:horses race) => (contains {:name "Mandarin Sunset" :odds "6/1"} :in-any-order)
-		(:horses race) => (contains {:name "Phoenix Returns" :odds "6/1"} :in-any-order)
-		(:horses race) => (contains {:name "Brae On" :odds "12/1"} :in-any-order)
-		(:horses race) => (contains {:name "Two Oscars" :odds "16/1"} :in-any-order)
-		(:horses race) => (contains {:name "Bold Slasher" :odds "20/1"} :in-any-order)
-		(:horses race) => (contains {:name "Big Sound" :odds "25/1"} :in-any-order))
+		(:horses race) => (contains {:name "No Deal" :odds "7/4" :tips 3} :in-any-order)
+		(:horses race) => (contains {:name "Cloud Creeper" :odds "9/4" :tips 5} :in-any-order)
+		(:horses race) => (contains {:name "Mandarin Sunset" :odds "6/1" :tips 1} :in-any-order)
+		(:horses race) => (contains {:name "Phoenix Returns" :odds "6/1" :tips 0} :in-any-order)
+		(:horses race) => (contains {:name "Brae On" :odds "12/1" :tips 0} :in-any-order)
+		(:horses race) => (contains {:name "Two Oscars" :odds "16/1" :tips 2} :in-any-order)
+		(:horses race) => (contains {:name "Bold Slasher" :odds "20/1" :tips 1} :in-any-order)
+		(:horses race) => (contains {:name "Big Sound" :odds "25/1" :tips 4} :in-any-order))
