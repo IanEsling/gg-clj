@@ -2,7 +2,6 @@
     	(:import 	[org.jsoup Jsoup]
    				[org.jsoup.nodes Document]))
 
-
 (defn race-page []
 	(Jsoup/parse "<div class=\"leftCol\">
     <h1 class=\"cardHeadline\">
@@ -25,7 +24,17 @@
     <span>Channel:
     <em>ATR</em> </span> </p>
     <!-- end race info -->
-    </div>"))
+    </div>
+	<div class=\"info\">
+    <p><strong>BETTING FORECAST:&nbsp;</strong><b>7/4 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=803045\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">No Deal</a></b>
+                 , 9/4 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=812441\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Cloud Creeper</a>
+                 , 6/1 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=802456\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Mandarin Sunset</a>
+                 , 6/1 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=796948\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Phoenix Returns</a>
+                 , 12/1 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=824123\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Brae On</a>
+                 , 16/1 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=800770\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Two Oscars</a>
+                 , 20/1 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=819631\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Bold Slasher</a>
+                 , 25/1 <a href=\"http://www.racingpost.com/horses/horse_home.sd?horse_id=824119\" onclick=\"scorecards.send(&quot;horse_name&quot;);return Html.popup(this, {width:695, height:800})\" title=\"Full details about this HORSE\">Big Sound</a>
+                 .</p> </div>"))
 
 (defn urls-page []
 	(Jsoup/parse "<div id=\"race_result\">
