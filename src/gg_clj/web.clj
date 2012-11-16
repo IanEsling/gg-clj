@@ -61,5 +61,5 @@
            (.select race
            	"h1 > strong")))
     :runners (get-runners race-page)
-     :horses (conj (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
+     :horses (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
                    (get-favourites (.getElementsByTag betting-forecast "b")))}))
