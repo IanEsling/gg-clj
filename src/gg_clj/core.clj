@@ -1,13 +1,23 @@
 (ns gg-clj.core
 	(:gen-class)
 	(:use gg-clj.web)
-  	(:use gg-clj.db))
+  	(:use gg-clj.db)
+  	(:use clojure.tools.logging)
+  	(:use clj-logging-config.log4j))
+
+(set-logger! :level :info
+    	     :additivity false
+        	 :pattern "%p - %m%n"
+             :out (org.apache.log4j.DailyRollingFileAppender.
+                  (org.apache.log4j.EnhancedPatternLayout. org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+                  "logs/gg.log"
+                  "yyyy-MM-dd"))
 
 (defn save-races []
-	(create-race-day (race-pages)))
+  	(info "Starting up saving races...")
+	(create-race-day (race-pages))
+  	(info "Finished saving races."))
 
-(defn -main
-  "I don't do a whole lot."
-  [& args]
-	(save-races))
+(defn -main [& args]
+  	(save-races))
 

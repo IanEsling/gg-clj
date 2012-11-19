@@ -1,8 +1,18 @@
 (ns gg-clj.db
   	(:use korma.db)
   	(:use korma.core)
+  	(:use clojure.tools.logging)
+    (:use clj-logging-config.log4j)
   	(:use [clj-time.core :excludes [extend]])
 	(:use clj-time.coerce))
+
+(set-logger! :level :info 
+    	     :additivity false
+        	 :pattern "%p - %m%n"
+             :out (org.apache.log4j.DailyRollingFileAppender.
+                  (org.apache.log4j.EnhancedPatternLayout. org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+                  "logs/gg.log"
+                  "yyyy-MM-dd"))
 
 (defdb db (postgres {:db "gg"}))
 
@@ -11,6 +21,7 @@
 (defentity horse (table :horse))
 
 (defn create-horse [{:keys [tips odds name race-id]}]
+  (info (str "saving " name " at " odds))
   (insert horse (values {:tips tips
                          :odds odds
                          :name name
@@ -18,6 +29,7 @@
                          })))
 
 (defn create-race [{:keys [runners venue time race-day-id]}]
+  (info (str "saving " time " at " venue))
   (insert race (values {:number_of_runners (Integer/valueOf runners)
                         :venue venue
                         :time time
