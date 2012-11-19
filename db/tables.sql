@@ -4,7 +4,7 @@ ALTER TABLE race_day RENAME TO race_day_old;
 
 CREATE TABLE race_day (
 	id Serial NOT NULL PRIMARY KEY, 
-    race_date date NOT NULL
+    race_date date NOT NULL UNIQUE
     );
 
 CREATE TABLE race (
@@ -12,7 +12,8 @@ CREATE TABLE race (
     race_day_id integer NOT NULL REFERENCES race_day(id),
     number_of_runners integer NOT NULL,
     time character varying(255) NOT NULL,
-    venue character varying(255) NOT NULL
+    venue character varying(255) NOT NULL,
+    UNIQUE (race_day_id, venue, time)
     );
 
 CREATE TABLE horse (
@@ -20,5 +21,6 @@ CREATE TABLE horse (
     race_id integer NOT NULL REFERENCES race(id),
     tips integer NOT NULL,
     odds character varying(255) NOT NULL,
-    name character varying(255) NOT NULL
+    name character varying(255) NOT NULL,
+    UNIQUE (race_id, name)
     );
