@@ -1,28 +1,13 @@
 (ns gg-clj.core
+	(:gen-class)
 	(:use gg-clj.web)
-  (:import 	[org.jsoup Jsoup]
-   			[org.jsoup.nodes Document]))
+  	(:use gg-clj.db))
+
+(defn save-races []
+	(create-race-day (race-pages)))
 
 (defn -main
   "I don't do a whole lot."
   [& args]
-  (println "Hello, World!"))
+	(save-races))
 
-
-(defn- connection []
-  (Jsoup/connect "http://betting.racingpost.com/horses/cards"))
-
-(defn- page []
-  (.get (connection)))
-
-(defn get-all-race-urls []
-	(get-race-urls page))
-
-(defn race-pages []
-(for [url (get-all-race-urls)]
-  (get-race (fn [] 
-			  (.get 
-				(.timeout
-               (Jsoup/connect (str "http://betting.racingpost.com" url))
-                 60000)
-              )))))

@@ -10,23 +10,27 @@
 (defentity race (table :race))
 (defentity horse (table :horse))
 
+(defn create-horse [{:keys [tips odds name race-id]}]
+  (insert horse (values {:tips tips
+                         :odds odds
+                         :name name
+                         :race_id race-id
+                         })))
+
+(defn create-race [{:keys [runners venue time race-day-id]}]
+  (insert race (values {:number_of_runners (Integer/valueOf runners)
+                        :venue venue
+                        :time time
+                        :race_day_id race-day-id
+                        })))
+
 (defn create-horses [race-id horses]
-  (doseq [h horses]
-      (insert horse (values {:tips (:tips h)
-                             :odds (:odds h)
-                             :name (:name h)
-                             :race_id race-id
-                             }))))
+  (doseq [h (map #(assoc % :race-id race-id) horses)]
+      (create-horse h)))
 
 (defn create-races [race-day-id races]
-	(doseq [r races]
-		(-> (:id (insert race 
-                 (values {:number_of_runners 
-                          (Integer/valueOf (:runners r))
-                          :venue (:venue r)
-                          :time (:time r)
-                          :race_day_id race-day-id
-                          })))
+	(doseq [r (map #(assoc % :race-day-id race-day-id) races)]
+		(-> (:id (create-race r))
         (create-horses (:horses r)))))
 
 (defn create-race-day [races]

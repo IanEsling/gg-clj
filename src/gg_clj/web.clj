@@ -1,6 +1,18 @@
 (ns gg-clj.web
-  (:use clojure.set)
-  (:use [clojure.string :only [trim]]))
+  	(:use clojure.set)
+  	(:use [clojure.string :only [trim]])
+  	(:import 	[org.jsoup Jsoup]
+   				[org.jsoup.nodes Document]))
+
+(def racing-post-base-url "http://betting.racingpost.com")
+
+(def race-index-url (str racing-post-base-url "/horses/cards"))
+
+(defn- connection []
+  (Jsoup/connect race-index-url))
+
+(defn- page []
+  (.get (connection)))
 
 (defn- get-anchor-href [coll a]
   (conj coll (.attr a "href")))
@@ -68,3 +80,15 @@
     :runners (get-runners race-page)
      :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
                    (get-favourites (.getElementsByTag betting-forecast "b"))) race-page)}))
+
+(defn get-all-race-urls []
+	(get-race-urls page))
+
+(defn race-pages []
+(for [url (get-all-race-urls)]
+  (get-race (fn [] 
+			  (.get 
+				(.timeout
+               (Jsoup/connect (str racing-post-base-url url))
+                 60000)
+              )))))
