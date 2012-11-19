@@ -1,8 +1,8 @@
 (ns gg-clj.db
   	(:use korma.db)
   	(:use korma.core)
-	(:use [clj-time.core :exclude [extend]])
-  	(:use clj-time.coerce))
+  	(:use [clj-time.core :excludes [extend]])
+	(:use clj-time.coerce))
 
 (defdb db (postgres {:db "gg"}))
 
@@ -10,19 +10,8 @@
 (defentity race (table :race))
 (defentity horse (table :horse))
 
-(defn all-races []
-(select race
-        (fields :venue :time)))
-
-(defn all-race-days []
-  (select race-day))
-
-(defn create-race-day []
-  (insert race-day (values {:race_date (to-sql-date (now))})))
-
 (defn create-horses [race-id horses]
-  (println race-id horses)
-	(doseq [h horses]
+  (doseq [h horses]
       (insert horse (values {:tips (:tips h)
                              :odds (:odds h)
                              :name (:name h)
@@ -33,9 +22,13 @@
 	(doseq [r races]
 		(-> (:id (insert race 
                  (values {:number_of_runners 
-                          (:number_of_runners r)
+                          (Integer/valueOf (:runners r))
                           :venue (:venue r)
                           :time (:time r)
                           :race_day_id race-day-id
                           })))
         (create-horses (:horses r)))))
+
+(defn create-race-day [races]
+  (-> (:id (insert race-day (values {:race_date (to-sql-date (now))})))
+      (create-races races)))
