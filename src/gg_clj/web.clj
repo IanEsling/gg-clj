@@ -63,9 +63,7 @@
         betting-forecast (first (.select (race-page) "div.info"))
         venue (.text (first (.select race "h1 > span")))
         time (.text (first (.select race "h1 > strong")))]
-    (print "getting race details ")
-    (print venue time)
-	{:venue venue
+    {:venue venue
 	:time time
     :runners (get-runners race-page)
      :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
