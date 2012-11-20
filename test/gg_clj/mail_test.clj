@@ -14,6 +14,11 @@
                     :horses '({:name "h5" :odds "3/1" :tips 4}
                               {:name "h6" :odds "9/10" :tips 1})})
 
+(def race4 {:venue "V" :time "15.34" :runners 9
+                    :horses '({:name "h8" :odds "Evs" :tips 4}
+                              {:name "h9" :odds "Evs" :tips 1}
+                              {:name "h7" :odds "21/10" :tips 1})})
+
 
 (fact "only bettable races should be emailed"
       (count (emailable-races [race race2 race3])) => 2
@@ -22,6 +27,7 @@
 
 (fact "only favourite horses should be in the race"
       (count (:horses (emailable-race race))) => 1
+      (count (:horses (emailable-race race4))) => 2
       )
 
 
@@ -29,6 +35,8 @@
       	(every? #(:magic-number %) (:horses (emailable-race race))) => true
 		(:magic-number (first (filter #(= (:name %) "h1") (:horses (emailable-race race))))) => -1
       	(:magic-number (first (filter #(= (:name %) "h4") (:horses (emailable-race race2))))) => -8
+        (:magic-number (first (filter #(= (:name %) "h8") (:horses (emailable-race race4))))) => -5
+        (:magic-number (first (filter #(= (:name %) "h9") (:horses (emailable-race race4))))) => -8
       )
 
 (fact "should calculate if race is bettable"
