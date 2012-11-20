@@ -94,4 +94,4 @@
                  :to "ian.esling@gmail.com"
                  :subject "Email From GeeGees!"
                  :body [{:type "text/html"
-                         :content (races-html races)}]}))
+                         :content (races-html (emailable-races races))}]}))
