@@ -3,7 +3,7 @@
   	(:use korma.core)
   	(:use clojure.tools.logging)
     (:use clj-logging-config.log4j)
-  	(:use [clj-time.core :excludes [extend]])
+  	(:use [clj-time.core :exclude [extend]])
 	(:use clj-time.coerce))
 
 (set-logger! :level :info 
