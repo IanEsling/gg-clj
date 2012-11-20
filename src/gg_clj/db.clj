@@ -10,11 +10,18 @@
     	     :additivity false
         	 :pattern "%p - %m%n"
              :out (org.apache.log4j.DailyRollingFileAppender.
-                  (org.apache.log4j.EnhancedPatternLayout. org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+                  (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
                   "logs/gg.log"
-                  "yyyy-MM-dd"))
+                  "yyyy-MM-dd")) 
 
-(defdb db (postgres {:db "gg"}))
+(defdb db (postgres 
+			(if-let [url (System/getenv "DATABASE_URL")]
+            	{:user (get (clojure.string/split (.getUserInfo url) #":") 0) 
+         		:password (get (clojure.string/split (.getUserInfo url) #":") 1)
+                 :db (subs url (+ 1 (.lastIndexOf url "/")))
+				}
+
+              {:db "gg"})))
 
 (defentity race-day (table :race_day))
 (defentity race (table :race))

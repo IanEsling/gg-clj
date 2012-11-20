@@ -10,7 +10,7 @@
     	     :additivity false
         	 :pattern "%p - %m%n"
              :out (org.apache.log4j.DailyRollingFileAppender.
-                  (org.apache.log4j.EnhancedPatternLayout. org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+                  (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
                   "logs/gg.log"
                   "yyyy-MM-dd"))
 
