@@ -20,6 +20,10 @@
       (map #(:time %) (emailable-races [race race2 race3])) => (contains ["12.34" "13.34"] :in-any-order)
       )
 
+(fact "only favourite horses should be in the race"
+      (count (:horses (emailable-race race))) => 1
+      )
+
 
 (fact "horses should have magic numbers calculated"
       	(every? #(:magic-number %) (:horses (emailable-race race))) => true
