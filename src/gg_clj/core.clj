@@ -2,6 +2,7 @@
 	(:gen-class)
 	(:use gg-clj.web)
   	(:use gg-clj.db)
+  	(:use gg-clj.mail)
   	(:use clojure.tools.logging)
   	(:use clj-logging-config.log4j))
 
@@ -19,5 +20,6 @@
   	(info "Finished saving races."))
 
 (defn -main [& args]
-  	(save-races))
+	(send-races (race-pages)))
+  ;;(save-races))
 
