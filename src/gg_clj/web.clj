@@ -22,7 +22,7 @@
   (Jsoup/connect race-index-url))
 
 (defn- page []
-  (.get (connection)))
+  (.get (.timeout (connection) 60000)))
 
 (defn- get-anchor-href [coll a]
   (conj coll (.attr a "href")))
