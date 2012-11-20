@@ -43,3 +43,42 @@
   (filter #(:bettable %)
           (for [race races]
             (emailable-race race))))
+
+(html [:html 
+       	(html [:head])
+		(html [:body {:style
+                      "font-family: Helvetica, Arial, sans-serif; background-color: #90ee90"
+                      }
+       	(html [:div {:style "text-align: center;"}
+               (html [:img {:style "padding-top: 15px;"
+                      :src "https://s3.amazonaws.com/ianesling/dad.jpg"
+                      }])])
+		(html [:h1 {:style "font-size: 24pt; padding-top: 10px; text-align: center;width: 80%;margin: auto;"}
+               "Les of Profit"])
+		(html [:h2 {:style "font-size: 20pt;text-align: center;width: 80%;margin: auto;"}
+               "Bettable races for today:"])
+		(html (for [r races]
+                (html [:table {:style "width: 80%;text-align: center;border-top: solid 2px black;margin: auto;"}
+                	 [:tr
+                        [:td {:style "text-align: right;width: 50%"}
+							[:div
+                             [:p {:style "font-size: 24pt;"}
+                              (:time race)]
+                             [:p {:style "font-size: 14pt;"}
+                              (:venue race)]
+                             [:p {:style "font-size: 11pt;"}
+                              (str "Number of runners: " (:runners race))]
+                             ]
+                         ]
+                      [:td {:style "text-align: center;width: 50%;"}
+                         [:div 
+                          (for [horse (:horses r)]
+                            (html
+                            [:p (str (:name horse) " - " (:odds horse))]
+                             [:p {:style "font-weight: bold;font-size: 14pt;"}
+                                  (:magic-number horse)]))
+
+                          ]
+                       ]
+                      ]])))
+       ])])
