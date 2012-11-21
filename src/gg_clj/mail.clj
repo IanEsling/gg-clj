@@ -1,7 +1,17 @@
 (ns gg-clj.mail
   (:use [clojure.string :exclude [reverse]])
   (:use postal.core)
-  (:use hiccup.core))
+  (:use hiccup.core)
+  (:use clojure.tools.logging)
+  (:use clj-logging-config.log4j))
+
+(set-logger! :level :info
+    	     :additivity false
+        	 :pattern "%p - %m%n"
+             :out (org.apache.log4j.DailyRollingFileAppender.
+                  (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
+                  "logs/gg.log"
+                  "yyyy-MM-dd"))
 
 (defn numeric-odds [odds]
   (let [components (for [s (split (replace odds "Evs" "1/1") #"/")] (read-string s))]
@@ -29,8 +39,9 @@
                                 (:horses race))))
 
 (defn magic-number [horse race]
+  (info (str "getting magic number: " (:odds-diff race) (:tips horse) (:runners race)))
     	(- 
-         (+ (:odds-diff race)(:tips horse))
+         (+ (:odds-diff race)(:tips horse))	
            (:runners race)))
 
 (defn add-magic-number [race]
@@ -80,7 +91,7 @@
                                 [:p (str (:name horse) " - " (:odds horse))]
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
                                       (:magic-number horse)]))
-    
+
                               ]
                            ]
                           ]])))
