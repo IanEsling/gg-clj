@@ -11,7 +11,7 @@
         	 :pattern "%p - %m%n"
              :out (org.apache.log4j.DailyRollingFileAppender.
                   (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
-                  "logs/gg.log"
+                  "logs/web.log"
                   "yyyy-MM-dd"))
 
 (def racing-post-base-url "http://betting.racingpost.com")
@@ -92,7 +92,7 @@
     (info "getting race details from page: ")
     {:venue venue
 	:time time
-    :runners (get-runners race-page)
+    :runners (Integer/valueOf (get-runners race-page))
      :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
                    (get-favourites (.getElementsByTag betting-forecast "b"))) race-page)}))
 

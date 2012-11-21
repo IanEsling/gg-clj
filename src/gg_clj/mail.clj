@@ -39,7 +39,8 @@
                                 (:horses race))))
 
 (defn magic-number [horse race]
-  (info (str "getting magic number: " (:odds-diff race) (:tips horse) (:runners race)))
+  (info (str "calculating magic number..." horse race))
+;;  (info (str "getting magic number: " (:odds-diff race) (:tips horse) (:runners race)))
     	(- 
          (+ (:odds-diff race)(:tips horse))	
            (:runners race)))
@@ -50,6 +51,7 @@
 		(assoc horse :magic-number (magic-number horse race)))))
 
 (defn emailable-race [race]
+  (info (str "getting emailable race: " race))
 	(-> (add-bettable race) (add-difference-in-odds) (remove-non-favourites) (add-magic-number)))
 
 (defn emailable-races [races]
