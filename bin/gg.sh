@@ -1,2 +1,2 @@
 #!/bin/bash          
-java -jar gg-clj.jar
+java -jar ./gg-clj.jar
