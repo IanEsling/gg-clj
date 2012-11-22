@@ -23,6 +23,7 @@
 (fact "only bettable races should be emailed"
       (count (emailable-races [race race2 race3])) => 2
       (map #(:time %) (emailable-races [race race2 race3])) => (contains ["12.34" "13.34"] :in-any-order)
+      (:time (first (emailable-races [race race2 race3]))) => "13.34"
       )
 
 (fact "only favourite horses should be in the race"

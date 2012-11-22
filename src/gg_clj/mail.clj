@@ -50,14 +50,22 @@
 	(for [horse (:horses race)]
 		(assoc horse :magic-number (magic-number horse race)))))
 
+(defn get-lowest-magic-number [race]
+    (assoc race :lowest-magic-number 
+      (reduce (fn [i j] (if (< i j) i j)) 0 
+            (map :magic-number (:horses race)))))
+
 (defn emailable-race [race]
   (info (str "getting emailable race: " race))
-	(-> (add-bettable race) (add-difference-in-odds) (remove-non-favourites) (add-magic-number)))
+	(-> (add-bettable race) (add-difference-in-odds) (remove-non-favourites) (add-magic-number) (get-lowest-magic-number)))
 
-(defn emailable-races [races]
-  (filter #(:bettable %)
-          (for [race races]
-            (emailable-race race))))
+(def magic-number-comparator (comparator (fn [i j] (< i j))))
+
+(defn emailable-races [races]    
+    (sort-by :lowest-magic-number magic-number-comparator        
+      (filter #(:bettable %)
+              (for [race races]
+                (emailable-race race)))))
 
 (defn races-html [races]
     (html [:html 
