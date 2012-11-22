@@ -9,7 +9,7 @@
                  [midje "1.4.0"]
                  [korma "0.3.0-beta11"]
 				 [postgresql "9.0-801.jdbc4"]
-                 [clj-time "0.4.4"]
+                 [joda-time/joda-time "2.1"]
                  [org.clojure/tools.logging "0.2.3"]
                  [clj-logging-config "1.9.10"]
                  [hiccup "1.0.2"]

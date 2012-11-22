@@ -3,8 +3,7 @@
   	(:use korma.core)
   	(:use clojure.tools.logging)
     (:use clj-logging-config.log4j)
-  	(:use [clj-time.core :exclude [extend]])
-	(:use clj-time.coerce))
+  	(:import [org.joda.time DateTime]))
 
 (set-logger! :level :info 
     	     :additivity false
@@ -53,5 +52,5 @@
         (create-horses (:horses r)))))
 
 (defn create-race-day [races]
-  (-> (:id (insert race-day (values {:race_date (to-sql-date (now))})))
+  (-> (:id (insert race-day (values {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))
       (create-races races)))

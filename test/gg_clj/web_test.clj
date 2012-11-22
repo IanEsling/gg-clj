@@ -12,7 +12,7 @@
 (fact "race parsed from race page"
       (:venue race) => "Venue 1"
       (:time race) => "12:45"
-      (:runners race) => "17")
+      (:runners race) => 17)
 
 (fact "horses parsed from race page"
       (count (:horses race)) => 8
