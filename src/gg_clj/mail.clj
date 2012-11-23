@@ -8,10 +8,7 @@
 (set-logger! :level :info
     	     :additivity false
         	 :pattern "%p - %m%n"
-             :out (org.apache.log4j.DailyRollingFileAppender.
-                  (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
-                  "logs/gg.log"
-                  "yyyy-MM-dd"))
+             )
 
 (defn numeric-odds [odds]
   (let [components (for [s (split (replace odds "Evs" "1/1") #"/")] (read-string s))]
