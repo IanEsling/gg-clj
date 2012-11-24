@@ -14,7 +14,7 @@
                   "yyyy-MM-dd")) 
 
 (defdb db (postgres 
-			(if-let [url (System/getenv "DATABASE_URL")]
+			(if-let [url (java.net.URI. (System/getenv "DATABASE_URL"))]
             	{:user (get (clojure.string/split (.getUserInfo url) #":") 0) 
          		:password (get (clojure.string/split (.getUserInfo url) #":") 1)
                  :db (subs url (+ 1 (.lastIndexOf url "/")))
