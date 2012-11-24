@@ -17,13 +17,15 @@
   	(info "Finished saving races."))
 
 (defn -main [& args]
-  (info (str "database url: " (System/getenv "DATABASE_URL")))
-;;  (info (str "userinfo:" (get (clojure.string/split (.getUserInfo (System/getenv "DATABASE_URL")) #":") 0))) 
-;;  (info (str "db: " (subs (System/getenv "DATABASE_URL") (+ 1 (.lastIndexOf (System/getenv "DATABASE_URL") "/")))))
-
-  (let [race-pages (race-pages)]
-    (create-race-day race-pages)
-    (send-races race-pages)))
+  (info (str "using database url: " (System/getenv "DATABASE_URL")))
+			(let [url (java.net.URI. (System/getenv "DATABASE_URL"))]
+            	(info (str "user: " (get (clojure.string/split (.getUserInfo url) #":") 0))) 
+         		(info (str "password: " (get (clojure.string/split (.getUserInfo url) #":") 1)))
+                (info (str "db: " (subs (System/getenv "DATABASE_URL") (+ 1 (.lastIndexOf (System/getenv "DATABASE_URL") "/")))))
+				)
+            (let [race-pages (race-pages)]
+			    (create-race-day race-pages)
+    			(send-races race-pages)))
 ;;  (-> (race-pages) (create-race-day) (send-races)))
 ;;	(send-races (race-pages)))
   ;;(save-races))
