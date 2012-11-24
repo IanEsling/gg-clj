@@ -20,6 +20,10 @@
   	(info "Finished saving races."))
 
 (defn -main [& args]
+  (info (str "database url: " (System/getenv "DATABASE_URL")))
+  (info (str "userinfo:" (get (clojure.string/split (.getUserInfo url) #":") 0))) 
+  (info (str "db: " (subs url (+ 1 (.lastIndexOf url "/")))))
+
   (let [race-pages (race-pages)]
     (create-race-day race-pages)
     (send-races race-pages)))
