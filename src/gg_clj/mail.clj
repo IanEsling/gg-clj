@@ -75,6 +75,7 @@
                 (emailable-race race)))))
 
 (defn races-html [races]
+  (info (str "getting html for races: " races))
     (html [:html 
             (html [:head])
             (html [:body {:style
