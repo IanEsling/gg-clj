@@ -10,6 +10,12 @@
         	 :pattern "%p - %m%n"
              )
 
+
+(defn if-bettable [race f]
+  (if (:bettable race)
+    (f race)
+    race))
+
 (defn numeric-odds [odds]
   (let [components (for [s (split (replace odds "Evs" "1/1") #"/")] (read-string s))]
         	(/ (first components) (second components))))
@@ -25,7 +31,7 @@
 
 (defn add-difference-in-odds [race]
   (let [odds (sorted-odds race)
-        first (first odds)
+    	first (first odds)
         second (second odds)]
 
   	(assoc race :odds-diff (- second first))))
@@ -54,7 +60,11 @@
 
 (defn emailable-race [race]
   (info (str "getting emailable race: " race))
-	(-> (add-bettable race) (add-difference-in-odds) (remove-non-favourites) (add-magic-number) (get-lowest-magic-number)))
+	(-> (add-bettable race) 
+        (if-bettable add-difference-in-odds) 
+        (if-bettable remove-non-favourites) 
+        (if-bettable add-magic-number) 
+        (if-bettable get-lowest-magic-number)))
 
 (def magic-number-comparator (comparator (fn [i j] (< i j))))
 

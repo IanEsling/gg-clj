@@ -20,6 +20,9 @@
                               {:name "h7" :odds "21/10" :tips 1})})
 
 
+(fact "shouldn't blow up if no horses in race"
+	(:bettable (emailable-race (assoc race :horses '()))) => false)
+
 (fact "only bettable races should be emailed"
       (count (emailable-races [race race2 race3])) => 2
       (map #(:time %) (emailable-races [race race2 race3])) => (contains ["12.34" "13.34"] :in-any-order)
