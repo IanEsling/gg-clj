@@ -7,11 +7,7 @@
 
 (set-logger! :level :info 
     	     :additivity false
-        	 :pattern "%p - %m%n"
-             :out (org.apache.log4j.DailyRollingFileAppender.
-                  (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
-                  "logs/gg.log"
-                  "yyyy-MM-dd")) 
+        	 :pattern "%p - %m%n") 
 
 (defdb db (postgres 
 			(if-let [url (java.net.URI. (System/getenv "DATABASE_URL"))]
@@ -52,5 +48,6 @@
         (create-horses (:horses r)))))
 
 (defn create-race-day [races]
+  (info (str "creating race day with connection: " (:user db) (:password db) (:db db)))
   (-> (:id (insert race-day (values {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))
       (create-races races)))
