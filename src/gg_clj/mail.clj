@@ -55,7 +55,7 @@
 
 (defn get-lowest-magic-number [race]
     (assoc race :lowest-magic-number 
-      (reduce (fn [i j] (if (< i j) i j)) 0 
+      (reduce (fn [i j] (if (< i j) i j)) 100 
             (map :magic-number (:horses race)))))
 
 (defn emailable-race [race]

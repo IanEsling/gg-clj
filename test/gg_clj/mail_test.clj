@@ -19,7 +19,6 @@
                               {:name "h9" :odds "Evs" :tips 1}
                               {:name "h7" :odds "21/10" :tips 1})})
 
-
 (fact "shouldn't blow up if no horses in race"
 	(:bettable (emailable-race (assoc race :horses '()))) => false)
 
@@ -33,7 +32,6 @@
       (count (:horses (emailable-race race))) => 1
       (count (:horses (emailable-race race4))) => 2
       )
-
 
 (fact "horses should have magic numbers calculated"
       	(every? #(:magic-number %) (:horses (emailable-race race))) => true
