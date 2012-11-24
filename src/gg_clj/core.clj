@@ -21,8 +21,8 @@
 
 (defn -main [& args]
   (info (str "database url: " (System/getenv "DATABASE_URL")))
-  (info (str "userinfo:" (get (clojure.string/split (.getUserInfo url) #":") 0))) 
-  (info (str "db: " (subs url (+ 1 (.lastIndexOf url "/")))))
+  (info (str "userinfo:" (get (clojure.string/split (.getUserInfo (System/getenv "DATABASE_URL")) #":") 0))) 
+  (info (str "db: " (subs (System/getenv "DATABASE_URL") (+ 1 (.lastIndexOf (System/getenv "DATABASE_URL") "/")))))
 
   (let [race-pages (race-pages)]
     (create-race-day race-pages)
