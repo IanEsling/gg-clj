@@ -43,7 +43,6 @@
 
 (defn magic-number [horse race]
   (info (str "calculating magic number..." horse race))
-;;  (info (str "getting magic number: " (:odds-diff race) (:tips horse) (:runners race)))
     	(- 
          (+ (:odds-diff race)(:tips horse))	
            (:runners race)))
@@ -116,6 +115,7 @@
        ])]))
 
 (defn send-races [races]
+  (info (str "sending races: " races))
   (send-message ^{:host "smtp.sendgrid.net"
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}

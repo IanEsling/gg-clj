@@ -20,6 +20,10 @@
   	(info "Finished saving races."))
 
 (defn -main [& args]
-	(send-races (race-pages)))
+  (let [race-pages (race-pages)]
+    (create-race-day race-pages)
+    (send-races race-pages)))
+;;  (-> (race-pages) (create-race-day) (send-races)))
+;;	(send-races (race-pages)))
   ;;(save-races))
 
