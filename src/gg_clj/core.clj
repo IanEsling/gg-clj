@@ -9,10 +9,7 @@
 (set-logger! :level :info
     	     :additivity false
         	 :pattern "%p - %m%n"
-             :out (org.apache.log4j.DailyRollingFileAppender.
-                  (org.apache.log4j.EnhancedPatternLayout. "%d %r [%t] %p %c - %m%n")
-                  "logs/gg.log"
-                  "yyyy-MM-dd"))
+             )
 
 (defn save-races []
   	(info "Starting up saving races...")
