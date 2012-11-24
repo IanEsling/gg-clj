@@ -13,6 +13,8 @@
                   "logs/gg.log"
                   "yyyy-MM-dd")) 
 
+(info (str "database url: " (System/getenv "DATABASE_URL")))
+
 (defdb db (postgres 
 			(if-let [url (System/getenv "DATABASE_URL")]
             	{:user (get (clojure.string/split (.getUserInfo url) #":") 0) 
