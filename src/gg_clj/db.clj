@@ -14,6 +14,8 @@
             	{:user (get (clojure.string/split (.getUserInfo url) #":") 0) 
          		:password (get (clojure.string/split (.getUserInfo url) #":") 1)
                  :db (subs (System/getenv "DATABASE_URL") (+ 1 (.lastIndexOf (System/getenv "DATABASE_URL") "/")))
+                 :host (.getHost url)
+                 :port (.getPort url)
 				}
 
               {:db "gg"})))
