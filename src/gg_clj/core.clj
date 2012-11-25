@@ -12,6 +12,6 @@
              )
 
 (defn -main [& args]
-            (let [race-pages (race-pages)]
+            (let [race-pages (multi-race-pages)]
 			    (create-race-day race-pages)
     			(send-races race-pages)))
