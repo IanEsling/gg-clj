@@ -120,8 +120,8 @@
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}
                 {:from "geegees@geegees.com"
-                 ;;:to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
-                 :to "ian.esling@gmail.com"
+                 :to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
+                 ;;:to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Tips"
                  :body [{:type "text/html"
                          :content (races-html (emailable-races races))}]}))
