@@ -37,8 +37,8 @@
   					(get-race-urls-from-selector page-f css-selector))))
 
 (defn- get-runners [race-page]
-       	(info (str "getting runners: " (.select (race-page) "p.raceShortInfo span")))
-		(loop [info (.select (race-page) "p.raceShortInfo span")]
+       	(info (str "getting runners: " (.select race-page "p.raceShortInfo span")))
+		(loop [info (.select race-page "p.raceShortInfo span")]
   		(def span (first info))
   		(if (= "Runners: " (.text (first (.textNodes span))))
     		(.text (.select span "strong"))
@@ -73,28 +73,28 @@
            (conj coll {:name (first names) :odds (first odds)}))))
 
 (defn tips [race-page]
-  	(info (str "getting tips: " (.select (race-page) "table#sc_sortBlock > tbody"))) 
+  	(info (str "getting tips: " (.select race-page "table#sc_sortBlock > tbody"))) 
 	(reduce (fn [coll e]
           (assoc coll (.text (.select e "td.h b"))
                       (.text (.select e "div.tips"))))
         {}
-	(.select (race-page) "table#sc_sortBlock > tbody")))
+	(.select race-page "table#sc_sortBlock > tbody")))
 
 (defn add-tips [horses race-page]
 	(map (fn [h] (assoc h :tips (Integer/valueOf (get (tips race-page) (.toUpperCase (:name h))))))
 		horses))
 
-(defn get-race [race-page]
-  (let [race (race-page)
-        betting-forecast (first (.select (race-page) "div.info"))
+(defn get-race [race-page-f]
+  (let [race (race-page-f)
+        betting-forecast (first (.select race "div.info"))
         venue (.text (first (.select race "h1 > span")))
         time (.text (first (.select race "h1 > strong")))]
     (info "getting race details from page: ")
     {:venue venue
 	:time time
-    :runners (Integer/valueOf (get-runners race-page))
+    :runners (Integer/valueOf (get-runners race))
      :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
-                   (get-favourites (.getElementsByTag betting-forecast "b"))) race-page)}))
+                   (get-favourites (.getElementsByTag betting-forecast "b"))) race)}))
 
 (defn get-all-race-urls []
 	(get-race-urls page))

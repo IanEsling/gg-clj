@@ -51,6 +51,5 @@
         (create-horses (:horses r)))))
 
 (defn create-race-day [races]
-  (info (str "creating race day with connection: " (:user db) (:password db) (:db db)))
   (-> (:id (insert race-day (values {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))
       (create-races races)))
