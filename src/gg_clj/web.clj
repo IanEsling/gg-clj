@@ -109,11 +109,11 @@
                        (dosync
                        (alter r conj 
                               (get-race (fn []
-                    (info (str "getting url: " url))
-			  		(.get 
-						(.timeout
-               				(Jsoup/connect (str racing-post-base-url url))
-                 		60000))))))))
+                                (info (str "getting url: " url))
+                                (.get 
+                                    (.timeout
+                                        (Jsoup/connect (str racing-post-base-url url))
+                                    60000))))))))
                    (get-all-race-urls))]
 	(doseq [future (.invokeAll pool tasks)]
       (.get future))
