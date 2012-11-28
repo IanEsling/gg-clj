@@ -82,7 +82,6 @@
         betting-forecast (first (.select race "div.info"))
         venue (.text (first (.select race "h1 > span")))
         time (.text (first (.select race "h1 > strong")))]
-    (info "getting race details from page: ")
     {:venue venue
 	:time time
     :runners (Integer/valueOf (get-runners race))
@@ -119,5 +118,3 @@
       (.get future))
     (.shutdown pool)
     (deref r)))
-
-
