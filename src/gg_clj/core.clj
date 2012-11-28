@@ -14,8 +14,8 @@
 (defn get-race-pages []
   (info (str "checking if race exists:" (race-day-today-exists)))
   (if-not (race-day-today-exists)
-    (create-race-day (multi-race-pages)))
-    (get-existing-race-days))
+    (create-race-day (multi-race-pages))
+    (get-existing-race-days)))
 
 (defn -main [& args]
   (info (str "started with args " args))

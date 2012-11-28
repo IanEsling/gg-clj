@@ -24,7 +24,7 @@
 (defentity horses (table :horse))
 
 (defentity races (table :race) (has-many horses {:fk :race_id})
-           (transform (fn [r] (info (str "transforming: " r)) (assoc r :horses (:horse r)))))
+           (transform (fn [r] (assoc r :horses (:horse r)))))
 
 (defentity race-day (table :race_day) (has-many races {:fk :race_day_id})
            (transform (fn [r] (assoc r :races (:race r)))))

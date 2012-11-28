@@ -46,7 +46,7 @@
   (info (str "calculating magic number..." horse race))
     	(- 
          (+ (:odds-diff race)(:tips horse))	
-           (:runners race)))
+           (:number_of_runners race)))
 
 (defn add-magic-number [race]
   (assoc race :horses
@@ -99,7 +99,7 @@
                                  [:p {:style "font-size: 14pt;"}
                                   (:venue r)]
                                  [:p {:style "font-size: 11pt;"}
-                                  (str "Number of runners: " (:runners r))]
+                                  (str "Number of runners: " (:number_of_runners r))]
                                  ]
                              ]
                           [:td {:style "text-align: center;width: 50%;"}
