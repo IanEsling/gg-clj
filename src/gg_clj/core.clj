@@ -21,5 +21,5 @@
   (info (str "started with args " args))
             (let [race-pages (get-race-pages)]
               	;;(create-race-day race-pages)
-              (info "sending races: " (:races (first race-pages)))
+              ;;(info "sending races: " (:races (first race-pages)))
     			(send-races (:races (first race-pages)))))

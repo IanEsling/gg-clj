@@ -116,7 +116,7 @@
        ])]))
 
 (defn send-races [races]
-  (info (str "sending races: " races))
+  (info (str "sending races: " (emailable-races races)))
   (send-message ^{:host "smtp.sendgrid.net"
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}
