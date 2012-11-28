@@ -21,6 +21,7 @@
         	(/ (first components) (second components))))
 
 (defn add-bettable [race]
+  (info (str "working out if bettable: " race))
       (assoc race :bettable (< 0 (count
 									(filter #(let [odds (numeric-odds %)]
 										(and (>= 2 odds) (<= 1 odds)))
