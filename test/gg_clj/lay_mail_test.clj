@@ -1,4 +1,4 @@
-(ns gg-clj.mail-test
+(ns gg-clj.lay-mail-test
   (:use gg-clj.mail)
   (:use midje.sweet))
 
