@@ -2,19 +2,19 @@
   (:use gg-clj.mail)
   (:use midje.sweet))
 
-(def race {:venue "V" :time "12.34" :runners 4
+(def race {:venue "V" :time "12.34" :number_of_runners 4
                     :horses '({:name "h1" :odds "2/1" :tips 2}
                               {:name "h2" :odds "3/1" :tips 1})})
 
-(def race2 {:venue "V" :time "13.34" :runners 11
+(def race2 {:venue "V" :time "13.34" :number_of_runners 11
                     :horses '({:name "h3" :odds "3/1" :tips 4}
                               {:name "h4" :odds "Evs" :tips 1})})
 
-(def race3 {:venue "V" :time "14.34" :runners 9
+(def race3 {:venue "V" :time "14.34" :number_of_runners 9
                     :horses '({:name "h5" :odds "3/1" :tips 4}
                               {:name "h6" :odds "9/10" :tips 1})})
 
-(def race4 {:venue "V" :time "15.34" :runners 9
+(def race4 {:venue "V" :time "15.34" :number_of_runners 9
                     :horses '({:name "h8" :odds "Evs" :tips 4}
                               {:name "h9" :odds "Evs" :tips 1}
                               {:name "h7" :odds "21/10" :tips 1})})
