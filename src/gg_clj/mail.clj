@@ -74,7 +74,7 @@
               (for [race races]
                 (emailable-race race)))))
 
-(defn races-html [races]
+(defn races-html [races title]
   (info (str "getting html for races: " races))
     (html [:html 
             (html [:head])
@@ -88,7 +88,7 @@
             (html [:h1 {:style "font-size: 24pt; padding-top: 10px; text-align: center;width: 80%;margin: auto;"}
                    "Les of Profit"])
             (html [:h2 {:style "font-size: 20pt;text-align: center;width: 80%;margin: auto;"}
-                   "Bettable races for today:"])
+                   title])
             (html (for [r races]
                     (html [:table {:style "width: 80%;text-align: center;border-top: solid 2px black;margin: auto;"}
                          [:tr
@@ -112,8 +112,7 @@
 
                               ]
                            ]
-                          ]])))
-       ])]))
+                          ]])))])]))
 
 (defn send-races [races]
   (info (str "sending races: " (emailable-races races)))
@@ -123,6 +122,6 @@
                 {:from "geegees@geegees.com"
                  :to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
                  ;;:to "ian.esling@gmail.com"
-                 :subject "Today's GeeGees Tips"
+                 :subject "Today's GeeGees Lay Betting Tips"
                  :body [{:type "text/html"
-                         :content (races-html (emailable-races races))}]}))
+                         :content (races-html (emailable-races races) "Lay Bet races for today:")}]}))
