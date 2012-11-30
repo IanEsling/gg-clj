@@ -108,9 +108,9 @@
                                 (html
                                 [:p (str (:name horse) " - " (:odds horse))]
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
-                                      (:magic-number horse)]))
-
-                              ]
+                                  (:magic-number horse)]))
+                                [:p (str  "Odds Difference - " (:odds-diff race))]
+                             ]
                            ]
                           ]])))])]))
 
