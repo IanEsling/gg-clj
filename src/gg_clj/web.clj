@@ -102,7 +102,7 @@
 
 (defn multi-race-pages []
   (let [r (ref [])
-        pool  (Executors/newFixedThreadPool 40)
+        pool  (Executors/newFixedThreadPool 20)
         tasks (map (fn [url]
                      (fn [] 
                        (dosync
