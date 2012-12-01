@@ -109,7 +109,7 @@
                                 [:p (str (:name horse) " - " (:odds horse))]
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
                                   (:magic-number horse)]))
-                              [:p (if (< (:odds-diff r) 3)
+                              [:p (if (< (:odds-diff r) 2)
                                     {:style "font-weight: bold;font-color: red;"}
                                     {:style "font-weight: bold;"}
                                     ) 
