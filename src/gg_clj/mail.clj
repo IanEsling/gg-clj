@@ -58,7 +58,7 @@
       (reduce (fn [i j] (if (< i j) i j)) 100 
             (map :magic-number (:horses race)))))
 
-(defn emailable-race [race]
+(defn emailable-lay-bet-race [race]
   (info (str "getting emailable race: " race))
 	(-> (add-bettable race) 
         (if-bettable add-difference-in-odds) 
@@ -68,11 +68,11 @@
 
 (def magic-number-comparator (comparator (fn [i j] (< i j))))
 
-(defn emailable-races [races]    
+(defn emailable-lay-bet-races [races]    
     (sort-by :lowest-magic-number magic-number-comparator        
       (filter #(:bettable %)
               (for [race races]
-                (emailable-race race)))))
+                (emailable-lay-bet-race race)))))
 
 (defn races-html [races title]
   (info (str "getting html for races: " races))
@@ -110,7 +110,8 @@
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
                                   (:magic-number horse)]))
                               [:p (if (> (:odds-diff r) 3)
-                                    {:style "font-weight: bold;color: red;"}
+                                    {:style "font-weight: bo
+ld;color: red;"}
                                     {:style "font-weight: bold;"}
                                     ) 
                                (str  "Odds Difference - " (:odds-diff r))]
@@ -119,7 +120,7 @@
                           ]])))])]))
 
 (defn send-races [races]
-  (info (str "sending races: " (emailable-races races)))
+  (info (str "sending races: " (emailable-lay-bet-races races)))
   (send-message ^{:host "smtp.sendgrid.net"
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}
@@ -128,4 +129,4 @@
                  ;;:to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Lay Betting Tips"
                  :body [{:type "text/html"
-                         :content (races-html (emailable-races races) "Lay Bet races for today:")}]}))
+                         :content (races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]}))
