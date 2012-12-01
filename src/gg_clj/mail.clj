@@ -98,10 +98,9 @@
                 (emailable-lay-bet-race race)))))
 
 (defn emailable-back-bet-races [races]    
-    (sort-by :highest-magic-number highest-magic-number-comparator        
-      (filter #(:bettable %)
-              (for [race races]
-                (emailable-back-bet-race race)))))
+    (sort-by :highest-magic-number highest-magic-number-comparator                     
+             (for [race races]
+               (emailable-back-bet-race race))))
 
 (defn lay-races-html [races title]
   (info (str "getting html for layraces: " races))
@@ -194,13 +193,13 @@ ld;color: red;"}
                           ]])))])]))
 
 (defn send-lay-races [races]
-  (info (str "sending races: " (emailable-lay-bet-races races)))
+  (info (str "sending lay races: " (emailable-lay-bet-races races)))
   (send-message ^{:host "smtp.sendgrid.net"
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}
                 {:from "geegees@geegees.com"
-                 :to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
-                 ;;:to "ian.esling@gmail.com"
+                 ;;:to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
+                 :to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Lay Betting Tips"
                  :body [{:type "text/html"
                          :content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]}))
