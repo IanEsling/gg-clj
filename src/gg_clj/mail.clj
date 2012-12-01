@@ -110,7 +110,7 @@
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
                                   (:magic-number horse)]))
                               [:p (if (< (:odds-diff r) 2)
-                                    {:style "font-weight: bold;font-color: red;"}
+                                    {:style "font-weight: bold;color: red;"}
                                     {:style "font-weight: bold;"}
                                     ) 
                                (str  "Odds Difference - " (:odds-diff r))]
