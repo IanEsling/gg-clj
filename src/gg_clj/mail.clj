@@ -182,12 +182,6 @@ ld;color: red;"}
                                 [:p (str (:name horse) " - " (:odds horse))]
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
                                   (:magic-number horse)]))
-                              [:p (if (> (:odds-diff r) 3)
-                                    {:style "font-weight: bo
-ld;color: red;"}
-                                    {:style "font-weight: bold;"}
-                                    ) 
-                               (str  "Odds Difference - " (:odds-diff r))]
                              ]
                            ]
                           ]])))])]))
