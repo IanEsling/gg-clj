@@ -16,9 +16,17 @@
     (f race)
     race))
 
+(defn if-has-horses [race f]
+  (if (:has-horses race)
+    (f race)
+    race))
+
 (defn numeric-odds [odds]
   (let [components (for [s (split (replace odds "Evs" "1/1") #"/")] (read-string s))]
         	(/ (first components) (second components))))
+
+(defn add-has-horses [race]
+  (assoc race :has-horses (< 0 (count (:horses race)))))
 
 (defn add-bettable [race]
   (info (str "working out if bettable: " race))
@@ -58,24 +66,45 @@
       (reduce (fn [i j] (if (< i j) i j)) 100 
             (map :magic-number (:horses race)))))
 
+(defn get-highest-magic-number [race]
+    (assoc race :highest-magic-number 
+      (reduce (fn [i j] (if (> i j) i j)) -100 
+              (map :magic-number (:horses race)))))
+
 (defn emailable-lay-bet-race [race]
-  (info (str "getting emailable race: " race))
+  (info (str "getting emailable lay race: " race))
 	(-> (add-bettable race) 
         (if-bettable add-difference-in-odds) 
         (if-bettable remove-non-favourites) 
         (if-bettable add-magic-number) 
         (if-bettable get-lowest-magic-number)))
 
-(def magic-number-comparator (comparator (fn [i j] (< i j))))
+(defn emailable-back-bet-race [race]
+  (info (str "getting emailable back race: " race))
+	(-> (add-has-horses race)
+        (if-has-horses add-difference-in-odds) 
+        (if-has-horses remove-non-favourites) 
+        (if-has-horses add-magic-number) 
+        (if-has-horses get-highest-magic-number)))
+
+(def lowest-magic-number-comparator (comparator (fn [i j] (< i j))))
+
+(def highest-magic-number-comparator (comparator (fn [i j] (> i j))))
 
 (defn emailable-lay-bet-races [races]    
-    (sort-by :lowest-magic-number magic-number-comparator        
+    (sort-by :lowest-magic-number lowest-magic-number-comparator        
       (filter #(:bettable %)
               (for [race races]
                 (emailable-lay-bet-race race)))))
 
-(defn races-html [races title]
-  (info (str "getting html for races: " races))
+(defn emailable-back-bet-races [races]    
+    (sort-by :highest-magic-number highest-magic-number-comparator        
+      (filter #(:bettable %)
+              (for [race races]
+                (emailable-back-bet-race race)))))
+
+(defn lay-races-html [races title]
+  (info (str "getting html for layraces: " races))
     (html [:html 
             (html [:head])
             (html [:body {:style
@@ -119,7 +148,7 @@ ld;color: red;"}
                            ]
                           ]])))])]))
 
-(defn send-races [races]
+(defn send-lay-races [races]
   (info (str "sending races: " (emailable-lay-bet-races races)))
   (send-message ^{:host "smtp.sendgrid.net"
                   :user (System/getenv "SENDGRID_USERNAME")
@@ -129,4 +158,4 @@ ld;color: red;"}
                  ;;:to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Lay Betting Tips"
                  :body [{:type "text/html"
-                         :content (races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]}))
+                         :content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]}))
