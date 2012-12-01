@@ -33,7 +33,7 @@
 (defn add-difference-in-odds [race]
   (let [odds (sorted-odds race)
     	first (first odds)
-        second (second (rest odds))]
+        second (second odds)]
 
   	(assoc race :odds-diff (- second first))))
 
