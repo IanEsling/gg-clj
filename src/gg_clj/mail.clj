@@ -188,7 +188,7 @@ ld;color: red;"}
 
 (defn send-lay-races [races]
   (info (str "sending lay races: " (emailable-lay-bet-races races)))
-  (doall [e (get-emails)]
+  (doseq [e (get-emails)]
          (send-message ^{:host "smtp.sendgrid.net"
                          :user (System/getenv "SENDGRID_USERNAME")
                          :pass (System/getenv "SENDGRID_PASSWORD")}
@@ -201,7 +201,7 @@ ld;color: red;"}
 
 (defn send-back-races [races]
   (info (str "sending back races: " (emailable-back-bet-races races)))
-  (doall [e (get-emails)]         
+  (doseq [e (get-emails)]         
          (send-message ^{:host "smtp.sendgrid.net"
                          :user (System/getenv "SENDGRID_USERNAME")
                          :pass (System/getenv "SENDGRID_PASSWORD")}
