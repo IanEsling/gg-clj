@@ -188,27 +188,29 @@ ld;color: red;"}
                           ]])))])]))
 
 (defn send-lay-races [races emails]
-  (doseq [e emails]
-    (info (str "sending lay races to " e))
-         (send-message ^{:host "smtp.sendgrid.net"
-                         :user (System/getenv "SENDGRID_USERNAME")
-                         :pass (System/getenv "SENDGRID_PASSWORD")}
-                       {:from "geegees@geegees.com"
-                        :to e
-                        ;;:to "ian.esling@gmail.com"
-                        :subject "Today's GeeGees Lay Betting Tips"
-                        :body [{:type "text/html"
-                                :content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]})))
+  (let [content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")]
+    (doseq [e emails]
+      (info (str "sending lay races to " e))
+      (send-message ^{:host "smtp.sendgrid.net"
+                      :user (System/getenv "SENDGRID_USERNAME")
+                      :pass (System/getenv "SENDGRID_PASSWORD")}
+                    {:from "geegees@geegees.com"
+                     :to e
+                     ;;:to "ian.esling@gmail.com"
+                     :subject "Today's GeeGees Lay Betting Tips"
+                     :body [{:type "text/html"
+                             :content content}]}))))
 
 (defn send-back-races [races emails]
-  (doseq [e emails]
-     (info (str "sending back races to " e))
-         (send-message ^{:host "smtp.sendgrid.net"
-                         :user (System/getenv "SENDGRID_USERNAME")
-                         :pass (System/getenv "SENDGRID_PASSWORD")}
-                       {:from "geegees@geegees.com"
-                        :to e
-                        ;;:to "ian.esling@gmail.com"
-                        :subject "Today's GeeGees Back Betting Tips"
-                        :body [{:type "text/html"
-                                :content (back-races-html (take 10 (emailable-back-bet-races races)) "Back Bet races for today:")}]})))
+  (let [content (back-races-html (take 10 (emailable-back-bet-races races)) "Back Bet races for today:")]
+    (doseq [e emails]
+      (info (str "sending back races to " e))
+      (send-message ^{:host "smtp.sendgrid.net"
+                      :user (System/getenv "SENDGRID_USERNAME")
+                      :pass (System/getenv "SENDGRID_PASSWORD")}
+                    {:from "geegees@geegees.com"
+                     :to e
+                     ;;:to "ian.esling@gmail.com"
+                     :subject "Today's GeeGees Back Betting Tips"
+                     :body [{:type "text/html"
+                             :content content}]}))))
