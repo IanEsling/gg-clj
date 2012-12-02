@@ -21,5 +21,5 @@
   (info (str "started with args " args))
   (let [races (get-races-for-today)
         emails (get-emails)]
-    (send-lay-races (races) emails)
-    (send-back-races (races) emails)))
+    (send-lay-races races emails)
+    (send-back-races races emails)))
