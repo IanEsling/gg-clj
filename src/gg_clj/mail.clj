@@ -152,7 +152,7 @@ ld;color: red;"}
     (html [:html 
             (html [:head])
             (html [:body {:style
-                          "font-family: Helvetica, Arial, sans-serif; background-color: blue"
+                          "font-family: Helvetica, Arial, sans-serif; background-color: #4BC2EE"
                           }
             (html [:div {:style "text-align: center;"}
                    (html [:img {:style "padding-top: 15px;"
@@ -208,4 +208,4 @@ ld;color: red;"}
                  :to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Back Betting Tips"
                  :body [{:type "text/html"
-                         :content (back-races-html (emailable-back-bet-races races) "Back Bet races for today:")}]}))
+                         :content (back-races-html (take 10 (emailable-back-bet-races races)) "Back Bet races for today:")}]}))
