@@ -186,9 +186,9 @@ ld;color: red;"}
                            ]
                           ]])))])]))
 
-(defn send-lay-races [races]
+(defn send-lay-races [races emails]
   (info (str "sending lay races: " (emailable-lay-bet-races races)))
-  (doseq [e (get-emails)]
+  (doseq [e emails]
          (send-message ^{:host "smtp.sendgrid.net"
                          :user (System/getenv "SENDGRID_USERNAME")
                          :pass (System/getenv "SENDGRID_PASSWORD")}
@@ -199,9 +199,9 @@ ld;color: red;"}
                         :body [{:type "text/html"
                                 :content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]})))
 
-(defn send-back-races [races]
+(defn send-back-races [races emails]
   (info (str "sending back races: " (emailable-back-bet-races races)))
-  (doseq [e (get-emails)]         
+  (doseq [e emails]         
          (send-message ^{:host "smtp.sendgrid.net"
                          :user (System/getenv "SENDGRID_USERNAME")
                          :pass (System/getenv "SENDGRID_PASSWORD")}

@@ -22,5 +22,5 @@
             (let [race-pages (get-race-pages)]
               	;;(create-race-day race-pages)
               ;;(info "sending races: " (:races (first race-pages)))
-              (send-lay-races (:races (first race-pages)))
-              (send-back-races (:races (first race-pages)))))
+              (send-lay-races (:races (first race-pages)) (get-emails))
+              (send-back-races (:races (first race-pages)) (get-emails))))
