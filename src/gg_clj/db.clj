@@ -10,16 +10,20 @@
         	 :pattern "%p - %m%n") 
 
 (defdb db (postgres 
-			(if-let [url (System/getenv "DATABASE_URL")]
-              (let [uri (java.net.URI. url)]
+           (if-let [url (System/getenv "DATABASE_URL")]
+             (let [uri (java.net.URI. url)]
             	{:user (get (clojure.string/split (.getUserInfo uri) #":") 0) 
          		:password (get (clojure.string/split (.getUserInfo uri) #":") 1)
                  :db (subs url (+ 1 (.lastIndexOf url "/")))
                  :host (.getHost uri)
                  :port (.getPort uri)
 				})
-
               {:db "gg"})))
+
+(defentity emails (table :email))
+
+( defn get-emails []
+  (map #(:address %) (select emails))) 
 
 (defentity horses (table :horse))
 
