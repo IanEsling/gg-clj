@@ -98,9 +98,10 @@
                 (emailable-lay-bet-race race)))))
 
 (defn emailable-back-bet-races [races]    
-    (sort-by :highest-magic-number highest-magic-number-comparator                     
-             (for [race races]
-               (emailable-back-bet-race race))))
+  (sort-by :highest-magic-number highest-magic-number-comparator
+           (filter #(:has-horses %)
+                   (for [race races]
+                     (emailable-back-bet-race race)))))
 
 (defn lay-races-html [races title]
   (info (str "getting html for layraces: " races))
