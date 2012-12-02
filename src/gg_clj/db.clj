@@ -60,12 +60,9 @@
 
 (defn race-day-today-exists []
   (< 0 (count (select race-day (where
-                                ;;{:race_date (java.sql.Date. (.getMillis (DateTime.)))}
-                                {:id 3}
-                                )))))
+                                {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))))
 
 (defn get-existing-race-days []
   (select race-day (where
-                    ;;{:race_date (java.sql.Date. (.getMillis (DateTime.)))}
-                    {:id 3})
+                    {:race_date (java.sql.Date. (.getMillis (DateTime.)))})
           (with races (with horses))))

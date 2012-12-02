@@ -192,8 +192,8 @@ ld;color: red;"}
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}
                 {:from "geegees@geegees.com"
-                 ;;:to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
-                 :to "ian.esling@gmail.com"
+                 :to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
+                 ;;:to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Lay Betting Tips"
                  :body [{:type "text/html"
                          :content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]}))
@@ -204,8 +204,8 @@ ld;color: red;"}
                   :user (System/getenv "SENDGRID_USERNAME")
                   :pass (System/getenv "SENDGRID_PASSWORD")}
                 {:from "geegees@geegees.com"
-                 ;;:to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
-                 :to "ian.esling@gmail.com"
+                 :to ["ian.esling@gmail.com" "pesling@gmail.com" "aliciales@esling.me.uk"]
+                 ;;:to "ian.esling@gmail.com"
                  :subject "Today's GeeGees Back Betting Tips"
                  :body [{:type "text/html"
                          :content (back-races-html (take 10 (emailable-back-bet-races races)) "Back Bet races for today:")}]}))
