@@ -11,16 +11,15 @@
         	 :pattern "%p - %m%n"
              )
 
-(defn get-race-pages []
+(defn get-races-for-today []
   (info (str "checking if race exists:" (race-day-today-exists)))
   (if-not (race-day-today-exists)
     (create-race-day (multi-race-pages)))
-    (get-existing-race-days))
+  (:races (get-race-day)))
 
 (defn -main [& args]
   (info (str "started with args " args))
-            (let [race-pages (get-race-pages)]
-              	;;(create-race-day race-pages)
-              ;;(info "sending races: " (:races (first race-pages)))
-              (send-lay-races (:races (first race-pages)) (get-emails))
-              (send-back-races (:races (first race-pages)) (get-emails))))
+  (let [races (get-races-for-today)
+        emails (get-emails)]
+    (send-lay-races (races) emails)
+    (send-back-races (races) emails)))
