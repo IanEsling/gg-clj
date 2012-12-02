@@ -31,9 +31,9 @@
 (defn add-bettable [race]
   (info (str "working out if bettable: " race))
       (assoc race :bettable (< 0 (count
-									(filter #(let [odds (numeric-odds %)]
-										(and (>= 2 odds) (<= 1 odds)))
-									(map #(:odds %) (:horses race)))))))
+                                  (filter #(let [odds (numeric-odds %)]
+                                             (and (>= 2 odds) (<= 1 odds)))
+                                          (map #(:odds %) (:horses race)))))))
 
 (defn sorted-odds [race]
   (sort (map #(numeric-odds %) (map #(:odds %) (:horses race)))))
@@ -188,8 +188,8 @@ ld;color: red;"}
                           ]])))])]))
 
 (defn send-lay-races [races emails]
-  (info (str "sending lay races: " (emailable-lay-bet-races races)))
   (doseq [e emails]
+    (info (str "sending lay races to " e))
          (send-message ^{:host "smtp.sendgrid.net"
                          :user (System/getenv "SENDGRID_USERNAME")
                          :pass (System/getenv "SENDGRID_PASSWORD")}
@@ -201,8 +201,8 @@ ld;color: red;"}
                                 :content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")}]})))
 
 (defn send-back-races [races emails]
-  (info (str "sending back races: " (emailable-back-bet-races races)))
-  (doseq [e emails]         
+  (doseq [e emails]
+     (info (str "sending back races to " e))
          (send-message ^{:host "smtp.sendgrid.net"
                          :user (System/getenv "SENDGRID_USERNAME")
                          :pass (System/getenv "SENDGRID_PASSWORD")}

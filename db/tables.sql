@@ -24,3 +24,7 @@ CREATE TABLE horse (
     name character varying(255) NOT NULL,
     UNIQUE (race_id, name)
     );
+
+CREATE TABLE email (
+    address character varying(255) NOT NULL UNIQUE
+);
