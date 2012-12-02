@@ -210,4 +210,4 @@ ld;color: red;"}
                         ;;:to "ian.esling@gmail.com"
                         :subject "Today's GeeGees Back Betting Tips"
                         :body [{:type "text/html"
-                                :content (back-races-html (emailable-back-bet-races races) "Back Bet races for today:")}]})))
+                                :content (back-races-html (take 10 (emailable-back-bet-races races)) "Back Bet races for today:")}]})))
