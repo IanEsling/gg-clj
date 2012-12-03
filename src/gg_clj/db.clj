@@ -1,5 +1,5 @@
 (ns gg-clj.db
-        (:use [ clojure.string :only [blank?]])
+        (:use [ clojure.string :only [blank? lower-case]])
   	(:use korma.db)
   	(:use korma.core)
   	(:use clojure.tools.logging)
@@ -81,7 +81,7 @@
     (update horses
             (set-fields {:finish (try  (Integer/valueOf (reduce (fn [pos h]
                                                                   (let [{name :name position :position} h]
-                                                                    (if (= (:name horse) name)
+                                                                    (if (= (lower-case (:name horse)) (lower-case name))
                                                                       (if (blank? position)
                                                                         999
                                                                         position)
