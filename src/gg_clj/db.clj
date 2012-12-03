@@ -1,8 +1,9 @@
 (ns gg-clj.db
+        (:use [ clojure.string :only [blank?]])
   	(:use korma.db)
   	(:use korma.core)
   	(:use clojure.tools.logging)
-    (:use clj-logging-config.log4j)
+        (:use clj-logging-config.log4j)
   	(:import [org.joda.time DateTime]))
 
 (set-logger! :level :info 
@@ -22,7 +23,7 @@
 
 (defentity emails (table :email))
 
-( defn get-emails []
+(defn get-emails []
   (map #(:address %) (select emails))) 
 
 (defentity horses (table :horse))
@@ -70,3 +71,21 @@
   (first  (select race-day (where
                             {:race_date (java.sql.Date. (.getMillis (DateTime.)))})
                   (with races (with horses)))))
+
+(defn race-days-with-no-results []
+  (exec-raw ["select rd.race_date from race_day rd, race r, horse h where rd.id = r.race_day_id and r.id = h.race_id and h.finish is null and r.race_date != current_date group by rd.id order by 1;"] :results))
+
+(defn update-positions [positions date]
+  (doseq [horse (flatten (map :horses (:races (first (select race-day (where {:race_date date}) (with races (with horses)))))))]
+    (prn horse)
+    (update horses
+            (set-fields {:finish (try  (Integer/valueOf (reduce (fn [pos h]
+                                                                  (let [{name :name position :position} h]
+                                                                    (if (= (:name horse) name)
+                                                                      (if (blank? position)
+                                                                        999
+                                                                        position)
+                                                                      pos)))
+                                                                999 positions))
+                                       (catch Exception e 999))})
+            (where {:id (:id horse)}))))

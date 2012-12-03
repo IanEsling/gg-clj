@@ -9,7 +9,10 @@
 
 (set-logger! :level :info 
     	     :additivity false
-        	 :pattern "%p - %m%n")
+             :pattern "%p - %m%n")
+
+(defn results-url [date] (str " http://www.racingpost.com/horses2/results/home.sd?r_date=" 
+ date "&resultsTabs=runner_index"))
 
 (def racing-post-base-url "http://betting.racingpost.com")
 
@@ -88,13 +91,13 @@
      :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
                    (get-favourites (.getElementsByTag betting-forecast "b"))) race)}))
 
-(defn get-horse-positions []
+(defn get-horse-positions [date]
   (map
    (fn [element]
      (let [name (.text (.select element "a"))
            position (.text (.select element "sup"))]
        {:name name :position position}))
-           (.select (.get (Jsoup/connect "http://www.racingpost.com/horses2/results/home.sd?r_date=2012-12-02&resultsTabs=runner_index")) "div#runner_index table.grid td.first")))
+   (.select (.get (.timeout (Jsoup/connect (results-url date)) 60000)) "div#runner_index table.grid td.first")))
 
 (defn get-all-race-urls []
 	(get-race-urls page))
