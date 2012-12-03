@@ -83,10 +83,18 @@
         venue (.text (first (.select race "h1 > span")))
         time (.text (first (.select race "h1 > strong")))]
     {:venue venue
-	:time time
-    :runners (Integer/valueOf (get-runners race))
+     :time time
+     :runners (Integer/valueOf (get-runners race))
      :horses (add-tips (reduce (fn [coll f] (conj coll f)) (get-horses (get-odds betting-forecast) (get-horse-names betting-forecast) '())
                    (get-favourites (.getElementsByTag betting-forecast "b"))) race)}))
+
+(defn get-horse-positions []
+  (map
+   (fn [element]
+     (let [name (.text (.select element "a"))
+           position (.text (.select element "sup"))]
+       {:name name :position position}))
+           (.select (.get (Jsoup/connect "http://www.racingpost.com/horses2/results/home.sd?r_date=2012-12-02&resultsTabs=runner_index")) "div#runner_index table.grid td.first")))
 
 (defn get-all-race-urls []
 	(get-race-urls page))
