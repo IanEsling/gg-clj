@@ -79,13 +79,14 @@
   (doseq [horse (flatten (map :horses (:races (first (select race-day (where {:race_date date}) (with races (with horses)))))))]
     (prn horse)
     (update horses
-            (set-fields {:finish (try  (Integer/valueOf (reduce (fn [pos h]
-                                                                  (let [{name :name position :position} h]
-                                                                    (if (= (lower-case (:name horse)) (lower-case name))
-                                                                      (if (blank? position)
-                                                                        999
-                                                                        position)
-                                                                      pos)))
-                                                                999 positions))
+            (set-fields {:finish (try  (Integer/valueOf
+                                        (reduce (fn [pos h]
+                                                  (let [{name :name position :position} h]
+                                                    (if (= (lower-case (:name horse)) (lower-case name))
+                                                      (if (blank? position)
+                                                        999
+                                                        position)
+                                                      pos)))
+                                                999 positions))
                                        (catch Exception e 999))})
             (where {:id (:id horse)}))))
