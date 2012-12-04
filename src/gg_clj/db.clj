@@ -10,6 +10,8 @@
     	     :additivity false
         	 :pattern "%p - %m%n") 
 
+;;setup database, assume if we don't have a 'DATABASE_URL' available
+;;then we're not running on Heroku and look for a local one (called 'gg')
 (defdb db (postgres 
            (if-let [url (System/getenv "DATABASE_URL")]
              (let [uri (java.net.URI. url)]
@@ -21,20 +23,27 @@
 				})
               {:db "gg"})))
 
+;;the email table holds a list of email addresses to send the lay and
+;;back bets to
 (defentity emails (table :email))
 
 (defn get-emails []
   (map #(:address %) (select emails))) 
 
+;;all the horses
 (defentity horses (table :horse))
 
+;;all the races
 (defentity races (table :race) (has-many horses {:fk :race_id})
            (transform (fn [r] (assoc r :horses (:horse r)))))
 
+;;top-level entity, the race day
 (defentity race-day (table :race_day) (has-many races {:fk :race_day_id})
            (transform (fn [r] (assoc r :races (:race r)))))
 
-(defn create-horse [{:keys [tips odds name race-id]}]
+(defn create-horse
+  "create a horse for a given race"
+  [{:keys [tips odds name race-id]}]
   (info (str "saving " name " at " odds))
   (insert horses (values {:tips tips
                          :odds odds
@@ -42,7 +51,9 @@
                          :race_id race-id
                          })))
 
-(defn create-race [{:keys [runners venue time race-day-id]}]
+(defn create-race
+  "create a race for a given race day"
+  [{:keys [runners venue time race-day-id]}]
   (info (str "saving " time " at " venue))
   (insert races (values {:number_of_runners (Integer/valueOf runners)
                         :venue venue
@@ -50,34 +61,47 @@
                         :race_day_id race-day-id
                         })))
 
-(defn create-horses [race-id horses]
+(defn create-horses
+  "associate a race id with a list of horses and insert into db"
+  [race-id horses]
   (doseq [h (map #(assoc % :race-id race-id) horses)]
       (create-horse h)))
 
-(defn create-races [race-day-id races]
+(defn create-races
+  "associate a race day id with a list of races and insert into db"
+  [race-day-id races]
 	(doseq [r (map #(assoc % :race-day-id race-day-id) races)]
 		(-> (:id (create-race r))
         (create-horses (:horses r)))))
 
-(defn create-race-day [races-to-create]
+(defn create-race-day
+  "create a race day for today and associate all the races passed in with it."
+  [races-to-create]
   (-> (:id (insert race-day (values {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))
       (create-races races-to-create)))
 
-(defn race-day-today-exists []
+(defn race-day-today-exists
+  "return true if a race day exists for today."
+  []
   (< 0 (count (select race-day (where
                                 {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))))
 
-(defn get-race-day []
+(defn get-race-day
+  "get the race day, race and horses for today"
+  []
   (first  (select race-day (where
                             {:race_date (java.sql.Date. (.getMillis (DateTime.)))})
                   (with races (with horses)))))
 
-(defn race-days-with-no-results []
+(defn race-days-with-no-results
+  "get all the dates for which we have race days with no results (i.e. horses with no finishing position)"
+  []
   (exec-raw ["select rd.race_date from race_day rd, race r, horse h where rd.id = r.race_day_id and r.id = h.race_id and h.finish is null and rd.race_date != current_date group by rd.id order by 1;"] :results))
 
-(defn update-positions [positions date]
+(defn update-positions
+  "update horses in db with finishing positions"
+  [positions date]
   (doseq [horse (flatten (map :horses (:races (first (select race-day (where {:race_date date}) (with races (with horses)))))))]
-    (prn horse)
     (update horses
             (set-fields {:finish (try  (Integer/valueOf
                                         (reduce (fn [pos h]
