@@ -11,67 +11,93 @@
              )
 
 
-(defn if-bettable [race f]
+(defn if-bettable
+  "call f on race if bettable"
+  [race f]
   (if (:bettable race)
     (f race)
     race))
 
-(defn if-has-horses [race f]
+(defn if-has-horses
+  "call f on race if it has horses"
+  [race f]
   (if (:has-horses race)
     (f race)
     race))
 
-(defn numeric-odds [odds]
+(defn numeric-odds
+  "turn string odds description (e.g. '3/1') into a numeric we can work with, turns 'Evs' (evens) into '1/1'"
+  [odds]
   (let [components (for [s (split (replace odds "Evs" "1/1") #"/")] (read-string s))]
         	(/ (first components) (second components))))
 
-(defn add-has-horses [race]
+(defn add-has-horses
+  "adds a true/false 'has-horses' flag to a race (true if there's one or more horses)"
+  [race]
   (assoc race :has-horses (< 0 (count (:horses race)))))
 
-(defn add-bettable [race]
+(defn add-bettable
+  "addes a true/false bettable flag to a race (true if there's a horse with odds between 1/1 and 2/1)"
+  [race]
   (info (str "working out if bettable: " race))
       (assoc race :bettable (< 0 (count
                                   (filter #(let [odds (numeric-odds %)]
                                              (and (>= 2 odds) (<= 1 odds)))
                                           (map #(:odds %) (:horses race)))))))
 
-(defn sorted-odds [race]
+(defn sorted-odds
+  "return a sorted list of odds for the horses in a race"
+  [race]
   (sort (map #(numeric-odds %) (map #(:odds %) (:horses race)))))
 
-(defn add-difference-in-odds [race]
+(defn add-difference-in-odds
+  "add to a race the difference in odds between the first and second favourites"
+  [race]
   (let [odds (sorted-odds race)
     	first (first odds)
         second (second odds)]
 
   	(assoc race :odds-diff (- second first))))
 
-(defn remove-non-favourites [race]
+(defn remove-non-favourites
+  "remove any horses that don't have the favourite's odds (may have joint favourites in a race)"
+  [race]
 	(assoc race :horses (filter 
                          #(= (first (sorted-odds race)) (numeric-odds (:odds %))) 
                                 (:horses race))))
 
-(defn magic-number [horse race]
+(defn magic-number
+  "calculate magic number for a horse in a race"
+  [horse race]
   (info (str "calculating magic number..." horse race))
     	(- 
          (+ (:odds-diff race)(:tips horse))	
            (:number_of_runners race)))
 
-(defn add-magic-number [race]
+(defn add-magic-number
+  "calculate the magic number for each horse in a race"
+  [race]
   (assoc race :horses
 	(for [horse (:horses race)]
 		(assoc horse :magic-number (magic-number horse race)))))
 
-(defn get-lowest-magic-number [race]
+(defn get-lowest-magic-number
+  "work out the lowest magic number for all the horses in a race"
+  [race]
     (assoc race :lowest-magic-number 
       (reduce (fn [i j] (if (< i j) i j)) 100 
             (map :magic-number (:horses race)))))
 
-(defn get-highest-magic-number [race]
+(defn get-highest-magic-number
+  "work out the highest magic number for all the horses in a race"
+  [race]
     (assoc race :highest-magic-number 
       (reduce (fn [i j] (if (> i j) i j)) -100 
               (map :magic-number (:horses race)))))
 
-(defn emailable-lay-bet-race [race]
+(defn emailable-lay-bet-race
+  "calculate all the bits needed for lay betting on a race"
+  [race]
   (info (str "getting emailable lay race: " race))
 	(-> (add-bettable race) 
         (if-bettable add-difference-in-odds) 
@@ -79,7 +105,9 @@
         (if-bettable add-magic-number) 
         (if-bettable get-lowest-magic-number)))
 
-(defn emailable-back-bet-race [race]
+(defn emailable-back-bet-race
+  "calculate all the bits needed for back betting on a race"
+  [race]
   (info (str "getting emailable back race: " race))
 	(-> (add-has-horses race)
         (if-has-horses add-difference-in-odds) 
@@ -91,19 +119,25 @@
 
 (def highest-magic-number-comparator (comparator (fn [i j] (> i j))))
 
-(defn emailable-lay-bet-races [races]    
+(defn emailable-lay-bet-races
+  "get races in a state and order for emailing lay bets"
+  [races]    
     (sort-by :lowest-magic-number lowest-magic-number-comparator        
       (filter #(:bettable %)
               (for [race races]
                 (emailable-lay-bet-race race)))))
 
-(defn emailable-back-bet-races [races]    
+(defn emailable-back-bet-races
+  "get races in a state and order for emailing back bets"
+  [races]    
   (sort-by :highest-magic-number highest-magic-number-comparator
            (filter #(:has-horses %)
                    (for [race races]
                      (emailable-back-bet-race race)))))
 
-(defn lay-races-html [races title]
+(defn lay-races-html
+  "HTML for lay betting email"
+  [races title]
   (info (str "getting html for layraces: " races))
     (html [:html 
             (html [:head])
@@ -148,7 +182,9 @@ ld;color: red;"}
                            ]
                           ]])))])]))
 
-(defn back-races-html [races title]
+(defn back-races-html
+  "HTML for back betting email"
+  [races title]
   (info (str "getting html for back races: " races))
     (html [:html 
             (html [:head])
@@ -187,7 +223,9 @@ ld;color: red;"}
                            ]
                           ]])))])]))
 
-(defn send-lay-races [races emails]
+(defn send-lay-races
+  "send lay bet email for given races to given email addresses"
+  [races emails]
   (let [content (lay-races-html (emailable-lay-bet-races races) "Lay Bet races for today:")]
     (doseq [e emails]
       (info (str "sending lay races to " e))
@@ -201,7 +239,9 @@ ld;color: red;"}
                      :body [{:type "text/html"
                              :content content}]}))))
 
-(defn send-back-races [races emails]
+(defn send-back-races
+  "send back bet email for given races to given email addresses"
+  [races emails]
   (let [content (back-races-html (take 10 (emailable-back-bet-races races)) "Back Bet races for today:")]
     (doseq [e emails]
       (info (str "sending back races to " e))
