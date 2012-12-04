@@ -73,6 +73,7 @@
                   (with races (with horses)))))
 
 (defn race-days-with-no-results []
+  (info "checking for race days with no results...")
   (exec-raw ["select rd.race_date from race_day rd, race r, horse h where rd.id = r.race_day_id and r.id = h.race_id and h.finish is null and rd.race_date != current_date group by rd.id order by 1;"] :results))
 
 (defn update-positions [positions date]
