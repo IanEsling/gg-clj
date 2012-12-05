@@ -18,4 +18,5 @@
                  ]
   :profiles {:dev
              {:dependencies [[midje "1.4.0"]
-                             [ring/ring-devel "0.3.7"] ]}})
+                             [ring/ring-devel "0.3.7" :exclusions [ring/ring-core]]]}}
+)
