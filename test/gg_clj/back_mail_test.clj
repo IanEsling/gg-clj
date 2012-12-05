@@ -1,5 +1,5 @@
 (ns gg-clj.back-mail-test
-  (:use gg-clj.mail)
+  (:use gg-clj.core)
   (:use midje.sweet))
 
 (def race {:venue "V" :time "12.34" :number_of_runners 4
@@ -20,17 +20,17 @@
                               {:name "h7" :odds "21/10" :tips 1})})
 
 (fact "shouldn't blow up if no horses in race"
-	(:has-horses (emailable-back-bet-race (assoc race :horses '()))) => false)
+	(:has-horses (calculate-back-bet-race (assoc race :horses '()))) => false)
 
 (fact "only favourite horses should be in the race"
-      (count (:horses (emailable-back-bet-race race))) => 1
-      (count (:horses (emailable-back-bet-race race4))) => 2
+      (count (:horses (calculate-back-bet-race race))) => 1
+      (count (:horses (calculate-back-bet-race race4))) => 2
       )
 
 (fact "horses should have magic numbers calculated"
-      	(every? #(:magic-number %) (:horses (emailable-back-bet-race race))) => true
-		(:magic-number (first (filter #(= (:name %) "h1") (:horses (emailable-back-bet-race race))))) => -1
-      	(:magic-number (first (filter #(= (:name %) "h4") (:horses (emailable-back-bet-race race2))))) => -8
-        (:magic-number (first (filter #(= (:name %) "h8") (:horses (emailable-back-bet-race race4))))) => -5
-        (:magic-number (first (filter #(= (:name %) "h9") (:horses (emailable-back-bet-race race4))))) => -8
+      	(every? #(:magic-number %) (:horses (calculate-back-bet-race race))) => true
+		(:magic-number (first (filter #(= (:name %) "h1") (:horses (calculate-back-bet-race race))))) => -1
+      	(:magic-number (first (filter #(= (:name %) "h4") (:horses (calculate-back-bet-race race2))))) => -8
+        (:magic-number (first (filter #(= (:name %) "h8") (:horses (calculate-back-bet-race race4))))) => -5
+        (:magic-number (first (filter #(= (:name %) "h9") (:horses (calculate-back-bet-race race4))))) => -8
       )

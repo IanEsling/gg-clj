@@ -1,5 +1,5 @@
 (ns gg-clj.lay-mail-test
-  (:use gg-clj.mail)
+  (:use gg-clj.core)
   (:use midje.sweet))
 
 (def race {:venue "V" :time "12.34" :number_of_runners 4
@@ -20,40 +20,40 @@
                               {:name "h7" :odds "21/10" :tips 1})})
 
 (fact "shouldn't blow up if no horses in race"
-	(:bettable (emailable-lay-bet-race (assoc race :horses '()))) => false)
+	(:bettable (calculate-lay-bet-race (assoc race :horses '()))) => false)
 
 (fact "only bettable races should be emailed"
-      (count (emailable-lay-bet-races [race race2 race3])) => 2
-      (map #(:time %) (emailable-lay-bet-races [race race2 race3])) => (contains ["12.34" "13.34"] :in-any-order)
-      (:time (first (emailable-lay-bet-races [race race2 race3]))) => "13.34"
+      (count (calculate-lay-bet-races [race race2 race3])) => 2
+      (map #(:time %) (calculate-lay-bet-races [race race2 race3])) => (contains ["12.34" "13.34"] :in-any-order)
+      (:time (first (calculate-lay-bet-races [race race2 race3]))) => "13.34"
       )
 
 (fact "only favourite horses should be in the race"
-      (count (:horses (emailable-lay-bet-race race))) => 1
-      (count (:horses (emailable-lay-bet-race race4))) => 2
+      (count (:horses (calculate-lay-bet-race race))) => 1
+      (count (:horses (calculate-lay-bet-race race4))) => 2
       )
 
 (fact "horses should have magic numbers calculated"
-      	(every? #(:magic-number %) (:horses (emailable-lay-bet-race race))) => true
-		(:magic-number (first (filter #(= (:name %) "h1") (:horses (emailable-lay-bet-race race))))) => -1
-      	(:magic-number (first (filter #(= (:name %) "h4") (:horses (emailable-lay-bet-race race2))))) => -8
-        (:magic-number (first (filter #(= (:name %) "h8") (:horses (emailable-lay-bet-race race4))))) => -5
-        (:magic-number (first (filter #(= (:name %) "h9") (:horses (emailable-lay-bet-race race4))))) => -8
+      	(every? #(:magic-number %) (:horses (calculate-lay-bet-race race))) => true
+		(:magic-number (first (filter #(= (:name %) "h1") (:horses (calculate-lay-bet-race race))))) => -1
+      	(:magic-number (first (filter #(= (:name %) "h4") (:horses (calculate-lay-bet-race race2))))) => -8
+        (:magic-number (first (filter #(= (:name %) "h8") (:horses (calculate-lay-bet-race race4))))) => -5
+        (:magic-number (first (filter #(= (:name %) "h9") (:horses (calculate-lay-bet-race race4))))) => -8
       )
 
 (fact "should calculate if race is bettable"
-	(emailable-lay-bet-race race) => (contains {:bettable true})
-	(emailable-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
+	(calculate-lay-bet-race race) => (contains {:bettable true})
+	(calculate-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
 											(if (= (:name horse) "h1")
                                           		(assoc horse :odds "3/1")
                                               	horse)))) 
       => (contains {:bettable false})
-	(emailable-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
+	(calculate-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
 											(if (= (:name horse) "h1")
                                           		(assoc horse :odds "Evs")
                                               horse))))
       => (contains {:bettable true})
-	(emailable-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
+	(calculate-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
 											(if (= (:name horse) "h1")
                                           		(assoc horse :odds "99/100")
                                               horse))))
