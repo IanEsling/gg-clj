@@ -1,1 +1,1 @@
-worker: lein run -m gg-clj.core
+worker: lein run -m gg-clj.app
