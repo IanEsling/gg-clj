@@ -86,6 +86,11 @@
   (< 0 (count (select race-day (where
                                 {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))))
 
+(defn get-latest-race-day
+  "get the race day, race and horses for most recent one in database"
+  []
+  (last (select race-day (with races (with horses)))))
+
 (defn get-race-day
   "get the race day, race and horses for today"
   []
@@ -96,6 +101,7 @@
 (defn race-days-with-no-results
   "get all the dates for which we have race days with no results (i.e. horses with no finishing position)"
   []
+  (info "checking for race days with no results...")
   (exec-raw ["select rd.race_date from race_day rd, race r, horse h where rd.id = r.race_day_id and r.id = h.race_id and h.finish is null and rd.race_date != current_date group by rd.id order by 1;"] :results))
 
 (defn update-positions
