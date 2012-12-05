@@ -1,5 +1,4 @@
 (ns gg-clj.mail
-  (:use [clojure.string :exclude [reverse]])
   (:use postal.core)
   (:use hiccup.core)
   (:use clojure.tools.logging)
@@ -28,7 +27,7 @@
 (defn numeric-odds
   "turn string odds description (e.g. '3/1') into a numeric we can work with, turns 'Evs' (evens) into '1/1'"
   [odds]
-  (let [components (for [s (split (replace odds "Evs" "1/1") #"/")] (read-string s))]
+  (let [components (for [s (.split #"/" (.replace odds "Evs" "1/1"))] (read-string s))]
         	(/ (first components) (second components))))
 
 (defn add-has-horses
@@ -152,7 +151,7 @@
                    "Les of Profit"])
             (html [:h2 {:style "font-size: 20pt;text-align: center;width: 80%;margin: auto;"}
                    title])
-            (html (for [r races]
+                   (html (for [r races]
                     (html [:table {:style "width: 80%;text-align: center;border-top: solid 2px black;margin: auto;"}
                          [:tr
                             [:td {:style "text-align: right;width: 50%"}
@@ -173,10 +172,8 @@
                                  [:p {:style "font-weight: bold;font-size: 14pt;"}
                                   (:magic-number horse)]))
                               [:p (if (> (:odds-diff r) 3)
-                                    {:style "font-weight: bo
-ld;color: red;"}
-                                    {:style "font-weight: bold;"}
-                                    ) 
+                                    {:style "font-weight: bold;color: red;"}
+                                    {:style "font-weight: bold;"}) 
                                (str  "Odds Difference - " (:odds-diff r))]
                              ]
                            ]
