@@ -86,6 +86,11 @@
   (< 0 (count (select race-day (where
                                 {:race_date (java.sql.Date. (.getMillis (DateTime.)))})))))
 
+(defn get-latest-race-day
+  "get the race day, race and horses for most recent one in database"
+  []
+  (last (select race-day (with races (with horses)))))
+
 (defn get-race-day
   "get the race day, race and horses for today"
   []
