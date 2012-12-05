@@ -3,6 +3,7 @@
   (:use [gg-clj.db :as db])
   (:use [gg-clj.mail :as mail])
   (:use [gg-clj.web :as web])
+  (:use [gg-clj.core :as core])
   (:use clojure.tools.logging)
   (:use clj-logging-config.log4j)
   (:use hiccup.core)
@@ -12,55 +13,105 @@
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
- 
+
+(defn race-day-results []
+  (for [race-day (db/race-days-with-results)]
+    {:race_date (.getTime (:race_date race-day))
+     :finish (:finish (first (:horses (first (calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))
+     }))
+
+(defn first-race-date-in-millis [race-day-results]
+  (prn "getting first race date...")
+  (prn race-day-results)
+  (reduce (fn [t n]
+            (prn t n)
+            (if (< t n) t n)) (.getTime (java.util.Date.))
+          (map :race_date race-day-results)))
+
+(defn running-total [race-days]
+  (def total (atom 0))
+  (def race-totals (atom []))
+  (doseq [race-day race-days]
+    (swap! total (fn [x] (+ x (if (not= 1 (:finish race-day)) 0.95 -2.0))))
+    (swap! race-totals conj {:race_date (:race_date race-day) :total @total}))
+  @race-totals)
+
+(defn chart-data [race-day-results]
+  (def data (apply str (apply vector (map #(str % ",")  (map :total race-day-results)))))
+  (prn data)
+  (subs data 0 (- (count data) 2)))
+
 (defn index-html
   "HTML for lay betting page"
-  [races title]
+  [race-day-results]
     (html [:html 
-            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]])
-            (html [:body
-            (html [:div {:style "text-align: center;"}
-                   (html [:img {:style "padding-top: 15px;"
-                          :src "https://s3.amazonaws.com/ianesling/dad.jpg"
-                          }])])
-            (html [:h1 {:style "font-size: 24pt; padding-top: 10px; text-align: center;width: 80%;margin: auto;"}
-                   "Les of Profit"])
-            (html [:h2 {:style "font-size: 20pt;text-align: center;width: 80%;margin: auto;"}
-                   title])
-                   (html (for [r races]
-                    (html [:table {:style "width: 80%;text-align: center;border-top: solid 2px black;margin: auto;"}
-                         [:tr
-                            [:td {:style "text-align: right;width: 50%"}
-                                [:div
-                                 [:p {:style "font-size: 24pt;"}
-                                  (:time r)]
-                                 [:p {:style "font-size: 14pt;"}
-                                  (:venue r)]
-                                 [:p {:style "font-size: 11pt;"}
-                                  (str "Number of runners: " (:number_of_runners r))]
-                                 ]
-                             ]
-                          [:td {:style "text-align: center;width: 50%;"}
-                             [:div 
-                              (for [horse (:horses r)]
-                                (html
-                                [:p (str (:name horse) " - " (:odds horse))]
-                                 [:p {:style "font-weight: bold;font-size: 14pt;"}
-                                  (:magic-number horse)]))
-                              [:p (if (> (:odds-diff r) 3)
-                                    {:style "font-weight: bold;color: red;"}
-                                    {:style "font-weight: bold;"}) 
-                               (str  "Odds Difference - " (:odds-diff r))]
-                             ]
-                           ]
-                          ]])))])]))
+           (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
+                  [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
+                  [:script {:type "text/javascript" :src "/js/highcharts.js"}]
+                  [:script {:type "text/javascript"}
+                   (str "$(function () {
+    var chart;
+    $(document).ready(function() {
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'container',
+                marginRight: 130,
+                marginBottom: 25
+            },
+            title: {
+                text: 'Monthly Average Temperature',
+                x: -20 //center
+            },
+            subtitle: {
+                text: 'Source: WorldClimate.com',
+                x: -20
+            },
+            xAxis: {
+                type: 'datetime'
+                },
+            yAxis: {
+                title: {
+                    text: 'Temperature (°C)'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                formatter: function() {
+                        return '<b>'+ this.series.name +'</b><br/>'+
+                        this.x +': '+ this.y +'°C';
+                }
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'top',
+                x: -10,
+                y: 100,
+                borderWidth: 0
+            },
+            series: [{
+                name: 'Tokyo',
+                pointInterval: 24 * 3600 * 1000,
+                pointStart: " (first-race-date-in-millis race-day-results)  ",
+                data: [" (chart-data race-day-results) 
+                               
+                               "]}
+          ]
+        });
+    });
+    
+});")]])
+           (html [:body
+                  (html [:div {:id "container"}])])]))
 
 (defroutes routes
   (GET "/"
        []
-       (if (db/race-day-today-exists)
-         (mail/lay-races-html (:races (db/get-race-day)) "Today's Lay Bets")
-         (index-html (mail/emailable-lay-bet-races (:races (db/get-latest-race-day))) "Latest Lay Bets")))
+       (index-html (running-total (race-day-results))))
   (route/files "/" {:root "public"}))
 
 (defn start []
