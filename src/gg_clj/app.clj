@@ -1,4 +1,5 @@
 (ns gg-clj.app
+  (:gen-class)
   (:use [gg-clj.db :as db])
   (:use [gg-clj.mail :as mail])
   (:use [gg-clj.web :as web])
