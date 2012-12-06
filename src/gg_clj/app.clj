@@ -8,7 +8,7 @@
   (:use clj-logging-config.log4j)
   (:use hiccup.core)
   (:use [compojure.core :only [defroutes GET]])
-  (:use ring.middleware.reload)
+;; DEV mode (:use ring.middleware.reload)
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
@@ -135,7 +135,9 @@
 (defn start
   ([] (start 8080))
   ( [port]
-      (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})))
+;; DEV mode      (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
+      (ring/run-jetty #'routes {:port port :join? false})
+      ))
 
 (def race-date-format (DateTimeFormat/forPattern "yyyy-MM-dd"))
 
