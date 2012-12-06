@@ -17,13 +17,13 @@
 (defn race-day-lay-results []
   (for [race-day (db/race-days-with-results)]
     {:race_date (.getTime (:race_date race-day))
-     :finish (:finish (first (:horses (first (core/calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))
+     :finish [(:finish (first (:horses (first (core/calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))]
      }))
 
 (defn race-day-back-results []
   (for [race-day (db/race-days-with-results)]
     {:race_date (.getTime (:race_date race-day))
-     :finish (:finish (first (:horses (first (core/calculate-back-bet-races (:races (db/get-race-day (:race_date race-day))))))))
+     :finish [(:finish (first (:horses (first (core/calculate-back-bet-races (:races (db/get-race-day (:race_date race-day))))))))]
      }))
 
 (defn first-race-date-in-millis [race-day-results]
@@ -33,10 +33,16 @@
           (map :race_date race-day-results)))
 
 (defn running-lay-total [x race-day]
-  (with-precision 5 (+ x (if (not= 1 (:finish race-day)) 0.95M -2.0M))))
+  (with-precision 5 (+ x (reduce (fn [tot finish]
+                                   (+ tot (if (not= 1M (BigDecimal. finish)) 0.95M -2.0M)))
+                                 0M
+                                 (:finish race-day)))))
 
 (defn running-back-total [x race-day]
-  (with-precision 5 (+ x (if (not= 1 (:finish race-day)) -1.0M 1.5M))))
+   (with-precision 5 (+ x (reduce (fn [tot finish]
+                                    (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M)))
+                                 0M
+                                 (:finish race-day)))))
 
 (defn running-total [race-days running-f]
   (def total (atom 0M))

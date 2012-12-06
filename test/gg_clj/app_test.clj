@@ -2,7 +2,7 @@
   (:use gg-clj.app)
   (:use midje.sweet))
 
-(def results [{:race_date 123455 :finish 9} {:race_date 123456 :finish 1}{:race_date 123457 :finish :2}{:race_date 123458 :finish 3}])
+(def results [{:race_date 123455 :finish [9]} {:race_date 123456 :finish [1]}{:race_date 123457 :finish [2]}{:race_date 123458 :finish [3]}])
 
 (fact "running totals calculated for any race"
       (running-total results running-lay-total) => (contains [{:race_date 123455 :total 0.95M}
