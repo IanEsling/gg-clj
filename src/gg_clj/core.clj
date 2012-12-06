@@ -4,8 +4,12 @@
 
 (set-logger! :level :info
     	     :additivity false
-        	 :pattern "%p - %m%n"
-                 )
+             :pattern "%r %p - %m%n"
+             :out (org.apache.log4j.FileAppender.
+              (org.apache.log4j.EnhancedPatternLayout. org.apache.log4j.EnhancedPatternLayout/TTCC_CONVERSION_PATTERN)
+              "logs/core.log"
+              true)
+             )
 
 (defn if-bettable
   "call f on race if bettable"
@@ -35,7 +39,7 @@
 (defn add-bettable
   "addes a true/false bettable flag to a race (true if there's a horse with odds between 1/1 and 2/1)"
   [race]
-  (info (str "working out if bettable: " race))
+;;  (info (str "working out if bettable: " race))
       (assoc race :bettable (< 0 (count
                                   (filter #(let [odds (numeric-odds %)]
                                              (and (>= 2 odds) (<= 1 odds)))
@@ -65,7 +69,7 @@
 (defn magic-number
   "calculate magic number for a horse in a race"
   [horse race]
-  (info (str "calculating magic number..." horse race))
+;;  (info (str "calculating magic number..." horse race))
     	(- 
          (+ (:odds-diff race)(:tips horse))	
            (:number_of_runners race)))
@@ -94,7 +98,7 @@
 (defn calculate-lay-bet-race
   "calculate all the bits needed for lay betting on a race"
   [race]
-  (info (str "calculating lay race: " race))
+;;  (info (str "calculating lay race: " race))
 	(-> (add-bettable race) 
         (if-bettable add-difference-in-odds) 
         (if-bettable remove-non-favourites) 
@@ -104,7 +108,7 @@
 (defn calculate-back-bet-race
   "calculate all the bits needed for back betting on a race"
   [race]
-  (info (str "calculating back race: " race))
+;;  (info (str "calculating back race: " race))
 	(-> (add-has-horses race)
         (if-has-horses add-difference-in-odds) 
         (if-has-horses remove-non-favourites) 

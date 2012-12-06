@@ -17,13 +17,13 @@
 (defn race-day-lay-results []
   (for [race-day (db/race-days-with-results)]
     {:race_date (.getTime (:race_date race-day))
-     :finish (:finish (first (:horses (first (calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))
+     :finish (:finish (first (:horses (first (core/calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))
      }))
 
 (defn race-day-back-results []
   (for [race-day (db/race-days-with-results)]
     {:race_date (.getTime (:race_date race-day))
-     :finish (:finish (first (:horses (first (calculate-back-bet-races (:races (db/get-race-day (:race_date race-day))))))))
+     :finish (:finish (first (:horses (first (core/calculate-back-bet-races (:races (db/get-race-day (:race_date race-day))))))))
      }))
 
 (defn first-race-date-in-millis [race-day-results]
@@ -128,12 +128,14 @@
 (defroutes routes
   (GET "/"
        []
-       (prn (running-total (race-day-back-results) running-back-total))
-       (index-html (running-total (race-day-lay-results) running-lay-total) (running-total (race-day-back-results) running-back-total)))
+       (index-html (running-total (race-day-lay-results) running-lay-total)
+                   (running-total (race-day-back-results) running-back-total)))
   (route/files "/" {:root "public"}))
 
-(defn start []
-  (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port 8080 :join? false}))
+(defn start
+  ([] (start 8080))
+  ( [port]
+      (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})))
 
 (def race-date-format (DateTimeFormat/forPattern "yyyy-MM-dd"))
 
@@ -165,4 +167,7 @@ If 'results' then the database is updated with the finishing position of horses 
     (doseq [date (db/race-days-with-no-results)]
       (def positions (web/get-horse-positions (convert-date-to-string (:race_date date))))
       (db/update-positions positions (:race_date date))))
+  (if (= (first args) "app")
+    (let [port (Integer. (or (System/getenv "PORT") 8080))]
+      (start port)))
   (info "exiting..."))
