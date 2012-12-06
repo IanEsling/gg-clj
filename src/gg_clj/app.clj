@@ -33,13 +33,13 @@
           (map :race_date race-day-results)))
 
 (defn running-lay-total [x race-day]
-  (+ x (if (not= 1 (:finish race-day)) 0.95 -2.0)))
+  (with-precision 5 (+ x (if (not= 1 (:finish race-day)) 0.95M -2.0M))))
 
 (defn running-back-total [x race-day]
-  (+ x (if (not= 1 (:finish race-day)) -1.0 1.5)))
+  (with-precision 5 (+ x (if (not= 1 (:finish race-day)) -1.0M 1.5M))))
 
 (defn running-total [race-days running-f]
-  (def total (atom 0))
+  (def total (atom 0M))
   (def race-totals (atom []))
   (doseq [race-day race-days]
     (swap! total running-f race-day)
@@ -49,10 +49,10 @@
 (defn chart-data [race-day-results]
   (def data (apply str (apply vector (map #(str % ",")  (map :total race-day-results)))))
   (prn data)
-  (subs data 0 (- (count data) 2)))
+  (subs data 0 (- (count data) 1)))
 
 (defn index-html
-  "HTML for lay betting page"
+  "HTML for betting page"
   [race-day-lay-results race-day-back-results]
     (html [:html 
            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
@@ -66,14 +66,15 @@
             chart: {
                 renderTo: 'container',
                 marginRight: 130,
-                marginBottom: 25
+                marginBottom: 25,
+                type: 'spline'
             },
             title: {
-                text: 'Monthly Average Temperature',
+                text: 'Betting Points',
                 x: -20 //center
             },
             subtitle: {
-                text: 'Source: WorldClimate.com',
+                text: '',
                 x: -20
             },
             xAxis: {
@@ -81,19 +82,13 @@
                 },
             yAxis: {
                 title: {
-                    text: 'Temperature (°C)'
+                    text: 'Number of Points'
                 },
                 plotLines: [{
                     value: 0,
                     width: 1,
                     color: '#808080'
                 }]
-            },
-            tooltip: {
-                formatter: function() {
-                        return '<b>'+ this.series.name +'</b><br/>'+
-                        this.x +': '+ this.y +'°C';
-                }
             },
             legend: {
                 layout: 'vertical',
