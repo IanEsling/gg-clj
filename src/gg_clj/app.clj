@@ -8,23 +8,40 @@
   (:use clj-logging-config.log4j)
   (:use hiccup.core)
   (:use [compojure.core :only [defroutes GET]])
-;; DEV mode (:use ring.middleware.reload)
+  (:use ring.middleware.reload)
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
 
-(defn race-day-lay-results []
+(defn finish-positions-for-races [f]
+  (fn [races] (for [race (f races)]
+               (:finish (first (:horses race))))))
+
+(defn first-race-only []
+  (fn [races] (vector (:finish (first (:horses (first races)))))))
+
+(defn all-below [magic-number]
+  (finish-positions-for-races (partial filter #(< (:lowest-magic-number %) magic-number)))
+  ;;(fn [races] (for [race (filter #(< (:lowest-magic-number %) magic-number) races)]
+  ;;             (:finish (first (:horses race)))))
+  )
+
+(defn race-day-results [races-f finish-f]
   (for [race-day (db/race-days-with-results)]
     {:race_date (.getTime (:race_date race-day))
-     :finish [(:finish (first (:horses (first (core/calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))]
+     :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day)))))
      }))
 
-(defn race-day-back-results []
-  (for [race-day (db/race-days-with-results)]
-    {:race_date (.getTime (:race_date race-day))
-     :finish [(:finish (first (:horses (first (core/calculate-back-bet-races (:races (db/get-race-day (:race_date race-day))))))))]
-     }))
+(defn race-day-lay-results
+  ([] (race-day-lay-results (first-race-only)))
+  ([finish-f]
+     (race-day-results core/calculate-lay-bet-races finish-f)))
+
+(defn race-day-back-results
+  ([] (race-day-back-results (first-race-only)))
+  ([finish-f]
+     (race-day-results core/calculate-back-bet-races finish-f)))
 
 (defn first-race-date-in-millis [race-day-results]
   (reduce (fn [t n]
@@ -59,7 +76,7 @@
 
 (defn index-html
   "HTML for betting page"
-  [race-day-lay-results race-day-back-results]
+  [race-day-lay-results race-day-back-results race-day-lay-below-results]
     (html [:html 
            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                   [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
@@ -112,6 +129,13 @@
                                
                 "]},
                     {
+                name: 'Lay Bets below -5',
+                pointInterval: 24 * 3600 * 1000,
+                pointStart: " (first-race-date-in-millis race-day-lay-below-results)  ",
+                data: [" (chart-data race-day-lay-below-results) 
+                               
+                "]},
+                    {
                 name: 'Back Bets',
                 pointInterval: 24 * 3600 * 1000,
                 pointStart: " (first-race-date-in-millis race-day-back-results)  ",
@@ -130,14 +154,15 @@
   (GET "/"
        []
        (index-html (running-total (race-day-lay-results) running-lay-total)
-                   (running-total (race-day-back-results) running-back-total)))
+                   (running-total (race-day-back-results) running-back-total)
+                   (running-total (race-day-lay-results (all-below -6)) running-lay-total)))
   (route/files "/" {:root "public"}))
 
 (defn start
   ([] (start 8080))
   ( [port]
-;; DEV mode      (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
-      (ring/run-jetty #'routes {:port port :join? false})
+      (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
+      ;;(ring/run-jetty #'routes {:port port :join? false})
       ))
 
 (def race-date-format (DateTimeFormat/forPattern "yyyy-MM-dd"))
