@@ -14,25 +14,35 @@
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
 
-(defn race-day-results []
+(defn race-day-lay-results []
   (for [race-day (db/race-days-with-results)]
     {:race_date (.getTime (:race_date race-day))
      :finish (:finish (first (:horses (first (calculate-lay-bet-races (:races (db/get-race-day (:race_date race-day))))))))
      }))
 
+(defn race-day-back-results []
+  (for [race-day (db/race-days-with-results)]
+    {:race_date (.getTime (:race_date race-day))
+     :finish (:finish (first (:horses (first (calculate-back-bet-races (:races (db/get-race-day (:race_date race-day))))))))
+     }))
+
 (defn first-race-date-in-millis [race-day-results]
-  (prn "getting first race date...")
-  (prn race-day-results)
   (reduce (fn [t n]
             (prn t n)
             (if (< t n) t n)) (.getTime (java.util.Date.))
           (map :race_date race-day-results)))
 
-(defn running-total [race-days]
+(defn running-lay-total [x race-day]
+  (+ x (if (not= 1 (:finish race-day)) 0.95 -2.0)))
+
+(defn running-back-total [x race-day]
+  (+ x (if (not= 1 (:finish race-day)) -1.0 1.5)))
+
+(defn running-total [race-days running-f]
   (def total (atom 0))
   (def race-totals (atom []))
   (doseq [race-day race-days]
-    (swap! total (fn [x] (+ x (if (not= 1 (:finish race-day)) 0.95 -2.0))))
+    (swap! total running-f race-day)
     (swap! race-totals conj {:race_date (:race_date race-day) :total @total}))
   @race-totals)
 
@@ -43,7 +53,7 @@
 
 (defn index-html
   "HTML for lay betting page"
-  [race-day-results]
+  [race-day-lay-results race-day-back-results]
     (html [:html 
            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                   [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
@@ -94,14 +104,21 @@
                 borderWidth: 0
             },
             series: [{
-                name: 'Tokyo',
+                name: 'Lay Bets',
                 pointInterval: 24 * 3600 * 1000,
-                pointStart: " (first-race-date-in-millis race-day-results)  ",
-                data: [" (chart-data race-day-results) 
+                pointStart: " (first-race-date-in-millis race-day-lay-results)  ",
+                data: [" (chart-data race-day-lay-results) 
                                
-                               "]}
+                "]},
+                    {
+                name: 'Back Bets',
+                pointInterval: 24 * 3600 * 1000,
+                pointStart: " (first-race-date-in-millis race-day-back-results)  ",
+                data: [" (chart-data race-day-back-results) 
+
+                "
           ]
-        });
+        }]});
     });
     
 });")]])
@@ -111,7 +128,8 @@
 (defroutes routes
   (GET "/"
        []
-       (index-html (running-total (race-day-results))))
+       (prn (running-total (race-day-back-results) running-back-total))
+       (index-html (running-total (race-day-lay-results) running-lay-total) (running-total (race-day-back-results) running-back-total)))
   (route/files "/" {:root "public"}))
 
 (defn start []
