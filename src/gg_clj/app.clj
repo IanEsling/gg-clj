@@ -15,14 +15,23 @@
   (:require [compojure.route :as route]))
 
 (defn finish-positions-for-races [f]
-  (fn [races] (for [race (f races)]
-               (:finish (first (:horses race))))))
+  (fn [races]
+    (for [race (f races)]
+      (:finish (first (:horses race))))
+;;    (def finish (:finish (first (:horses (first (f races))))))
+;;    (if (nil? finish) [] [finish])
+    ))
 
 (defn first-race-only []
-  (fn [races] (vector (:finish (first (:horses (first races)))))))
+;;  (finish-positions-for-races first)
+  (fn [races] (vector (:finish (first (:horses (first races))))))
+  )
 
 (defn all-below [magic-number]
-  (finish-positions-for-races (partial filter #(< (:lowest-magic-number %) magic-number)))
+  (finish-positions-for-races
+   (comp
+    (partial filter #(< (:lowest-magic-number %) magic-number))
+    (partial filter #(> 3 (:odds-diff %)))))
   ;;(fn [races] (for [race (filter #(< (:lowest-magic-number %) magic-number) races)]
   ;;             (:finish (first (:horses race)))))
   )
@@ -50,6 +59,7 @@
           (map :race_date race-day-results)))
 
 (defn running-lay-total [x race-day]
+  (prn (:finish race-day))
   (with-precision 5 (+ x (reduce (fn [tot finish]
                                    (+ tot (if (not= 1M (BigDecimal. finish)) 0.95M -2.0M)))
                                  0M
@@ -155,7 +165,7 @@
        []
        (index-html (running-total (race-day-lay-results) running-lay-total)
                    (running-total (race-day-back-results) running-back-total)
-                   (running-total (race-day-lay-results (all-below -6)) running-lay-total)))
+                   (running-total (race-day-lay-results (all-below -10)) running-lay-total)))
   (route/files "/" {:root "public"}))
 
 (defn start
