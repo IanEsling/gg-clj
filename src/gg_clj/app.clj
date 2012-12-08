@@ -87,9 +87,27 @@
   (prn data)
   (subs data 0 (- (count data) 1)))
 
+(defn chart-series [running-totals]
+  (apply str
+         (for [running-total running-totals]
+           (str "{
+                name: '"
+                (:title running-total)
+                "',
+                pointInterval: 24 * 3600 * 1000,
+                pointStart: "
+                (first-race-date-in-millis (:value running-total))
+                ",
+                data: ["
+                (chart-data (:value running-total))
+                "]},"
+                )
+
+           )))
+             
 (defn index-html
   "HTML for betting page"
-  [race-day-lay-results race-day-lay-new-magic-number-results race-day-lay-below-results]
+  [running-totals]
     (html [:html 
            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                   [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
@@ -134,29 +152,9 @@
                 y: 100,
                 borderWidth: 0
             },
-            series: [{
-                name: 'Original Lay Bets',
-                pointInterval: 24 * 3600 * 1000,
-                pointStart: " (first-race-date-in-millis race-day-lay-results)  ",
-                data: [" (chart-data race-day-lay-results) 
-                               
-                "]},
-                    {
-                name: 'Lay Bets below -5',
-                pointInterval: 24 * 3600 * 1000,
-                pointStart: " (first-race-date-in-millis race-day-lay-below-results)  ",
-                data: [" (chart-data race-day-lay-below-results) 
-                               
-                "]},
-                    {
-                name: 'New Magic Number Lay Bets',
-                pointInterval: 24 * 3600 * 1000,
-                pointStart: " (first-race-date-in-millis race-day-lay-new-magic-number-results)  ",
-                data: [" (chart-data race-day-lay-new-magic-number-results) 
-
-                "
-          ]
-        }]});
+            series: ["
+                        (chart-series running-totals)
+         "]});
     });
     
 });")]])
@@ -166,9 +164,9 @@
 (defroutes routes
   (GET "/"
        []
-       (index-html (running-total (race-day-lay-results) running-lay-total)
-                   (running-total (race-day-lay-results (first-race-only) core/new-magic-number) running-lay-total)
-                   (running-total (race-day-lay-results (all-below -11) core/new-magic-number) running-lay-total)))
+       (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+                    {:title "New Magic Number Lay Bets" :value (running-total (race-day-lay-results (first-race-only) core/new-magic-number) running-lay-total)}
+                    {:title "All Below Threshold" :value (running-total (race-day-lay-results (all-below -11) core/new-magic-number) running-lay-total)}]))
   (route/files "/" {:root "public"}))
 
 (defn start
