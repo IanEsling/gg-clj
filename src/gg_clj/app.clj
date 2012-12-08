@@ -18,23 +18,21 @@
   (fn [races]
     (for [race (f races)]
       (:finish (first (:horses race))))
-;;    (def finish (:finish (first (:horses (first (f races))))))
-;;    (if (nil? finish) [] [finish])
     ))
 
 (defn first-race-only []
-;;  (finish-positions-for-races first)
-  (fn [races] (vector (:finish (first (:horses (first races))))))
+  (finish-positions-for-races (comp vector first))
   )
 
-(defn all-below [magic-number]
+(defn finishing-positions [& fs]
   (finish-positions-for-races
-   (comp
-    (partial filter #(< (:lowest-magic-number %) magic-number))
-    (partial filter #(> 3 (:odds-diff %)))))
-  ;;(fn [races] (for [race (filter #(< (:lowest-magic-number %) magic-number) races)]
-  ;;             (:finish (first (:horses race)))))
-  )
+   (apply comp fs)))
+
+(defn below-magic-number-of [magic-number]
+  (partial filter #(< (:lowest-magic-number %) magic-number)))
+
+(defn odds-difference-less-than [odds-diff]
+  (partial filter #(> odds-diff (:odds-diff %))))
 
 (defn race-day-results
   ([races-f finish-f] (race-day-results races-f finish-f core/magic-number))
@@ -166,7 +164,11 @@
        []
        (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
                     {:title "New Magic Number Lay Bets" :value (running-total (race-day-lay-results (first-race-only) core/new-magic-number) running-lay-total)}
-                    {:title "All Below Threshold" :value (running-total (race-day-lay-results (all-below -11) core/new-magic-number) running-lay-total)}]))
+                    {:title "All Below Threshold" :value (running-total (race-day-lay-results
+                                                                         (finishing-positions (below-magic-number-of -11)
+                                                                                              (odds-difference-less-than 3))
+                                                                         core/new-magic-number)
+                                                                        running-lay-total)}]))
   (route/files "/" {:root "public"}))
 
 (defn start

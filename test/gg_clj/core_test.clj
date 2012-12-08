@@ -11,10 +11,10 @@
   (comp :magic-number first (partial filter #(= (:name %) name)))
   )
 
-(defn new-magic-number [horse race]
+(defn test-magic-number [horse race]
   (- (core/magic-number horse race) (reduce (fn [mn h] (if (= (:name h) (:name horse)) mn (+ mn (:tips h)))) 0 (:horses race)))  
   )
 
 (fact "should have magic number calculated"
-      ((get-magic-number-for-horse "h1") (:horses (core/calculate-lay-bet-race race new-magic-number))) => -2            
+      ((get-magic-number-for-horse "h1") (:horses (core/calculate-lay-bet-race race test-magic-number))) => -2            
 )
