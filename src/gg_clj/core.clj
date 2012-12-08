@@ -74,12 +74,20 @@
          (+ (:odds-diff race)(:tips horse))	
            (:number_of_runners race)))
 
+(defn new-magic-number [horse race]
+  (-
+   (- 
+    (+ (* 5 (:odds-diff race)) (* 5 (:tips horse)))
+    (* 2 (:number_of_runners race)))
+   (* 0 (reduce (fn [mn h] (if (= (:name h) (:name horse)) mn (+ mn (:tips h)))) 0 (:horses race))))
+  )
+
 (defn add-magic-number
   "calculate the magic number for each horse in a race"
-  [race]
+  [magic-num-f race]
   (assoc race :horses
 	(for [horse (:horses race)]
-		(assoc horse :magic-number (magic-number horse race)))))
+		(assoc horse :magic-number (magic-num-f horse race)))))
 
 (defn get-lowest-magic-number
   "work out the lowest magic number for all the horses in a race"
@@ -97,23 +105,23 @@
 
 (defn calculate-lay-bet-race
   "calculate all the bits needed for lay betting on a race"
-  [race]
-;;  (info (str "calculating lay race: " race))
-	(-> (add-bettable race) 
-        (if-bettable add-difference-in-odds) 
-        (if-bettable remove-non-favourites) 
-        (if-bettable add-magic-number) 
-        (if-bettable get-lowest-magic-number)))
+  ([race] (calculate-lay-bet-race race magic-number))
+  ([race magic-num-f]
+     (-> (add-bettable race) 
+         (if-bettable add-difference-in-odds) 
+         (if-bettable (partial add-magic-number magic-num-f)) 
+         (if-bettable remove-non-favourites) 
+         (if-bettable get-lowest-magic-number))))
 
 (defn calculate-back-bet-race
   "calculate all the bits needed for back betting on a race"
-  [race]
-;;  (info (str "calculating back race: " race))
-	(-> (add-has-horses race)
-        (if-has-horses add-difference-in-odds) 
-        (if-has-horses remove-non-favourites) 
-        (if-has-horses add-magic-number) 
-        (if-has-horses get-highest-magic-number)))
+  ([race] (calculate-back-bet-race race magic-number))
+  ([race magic-num-f]
+     (-> (add-has-horses race)
+         (if-has-horses add-difference-in-odds) 
+         (if-has-horses remove-non-favourites) 
+         (if-has-horses (partial add-magic-number magic-num-f)) 
+         (if-has-horses get-highest-magic-number))))
 
 (def lowest-magic-number-comparator (comparator (fn [i j] (< i j))))
 
@@ -121,16 +129,18 @@
 
 (defn calculate-lay-bet-races
   "get bettable calculated races in a sensible order"
-  [races]    
-    (sort-by :lowest-magic-number lowest-magic-number-comparator        
-      (filter #(:bettable %)
-              (for [race races]
-                (calculate-lay-bet-race race)))))
+  ([races] (calculate-lay-bet-races races magic-number))
+  ([races magic-number-f]
+     (sort-by :lowest-magic-number lowest-magic-number-comparator        
+              (filter #(:bettable %)
+                      (for [race races]
+                        (calculate-lay-bet-race race magic-number-f))))))
 
 (defn calculate-back-bet-races
   "get bettable calculated races in a sensible order"
-  [races]    
-  (sort-by :highest-magic-number highest-magic-number-comparator
-           (filter #(:has-horses %)
-                   (for [race races]
-                     (calculate-back-bet-race race)))))
+  ([races] (calculate-back-bet-races races magic-number))
+  ([races magic-number-f]
+     (sort-by :highest-magic-number highest-magic-number-comparator
+              (filter #(:has-horses %)
+                      (for [race races]
+                        (calculate-back-bet-race race magic-number-f))))))

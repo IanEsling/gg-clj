@@ -36,16 +36,19 @@
   ;;             (:finish (first (:horses race)))))
   )
 
-(defn race-day-results [races-f finish-f]
-  (for [race-day (db/race-days-with-results)]
-    {:race_date (.getTime (:race_date race-day))
-     :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day)))))
-     }))
+(defn race-day-results
+  ([races-f finish-f] (race-day-results races-f finish-f core/magic-number))
+  ([races-f finish-f magic-number-f]
+     (for [race-day (db/race-days-with-results)]
+       {:race_date (.getTime (:race_date race-day))
+        :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))
+        })))
 
 (defn race-day-lay-results
   ([] (race-day-lay-results (first-race-only)))
-  ([finish-f]
-     (race-day-results core/calculate-lay-bet-races finish-f)))
+  ([finish-f] (race-day-lay-results finish-f core/magic-number))
+  ([finish-f magic-number-f]
+     (race-day-results core/calculate-lay-bet-races finish-f magic-number-f)))
 
 (defn race-day-back-results
   ([] (race-day-back-results (first-race-only)))
@@ -86,7 +89,7 @@
 
 (defn index-html
   "HTML for betting page"
-  [race-day-lay-results race-day-back-results race-day-lay-below-results]
+  [race-day-lay-results race-day-lay-new-magic-number-results race-day-lay-below-results]
     (html [:html 
            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                   [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
@@ -132,7 +135,7 @@
                 borderWidth: 0
             },
             series: [{
-                name: 'Lay Bets',
+                name: 'Original Lay Bets',
                 pointInterval: 24 * 3600 * 1000,
                 pointStart: " (first-race-date-in-millis race-day-lay-results)  ",
                 data: [" (chart-data race-day-lay-results) 
@@ -146,10 +149,10 @@
                                
                 "]},
                     {
-                name: 'Back Bets',
+                name: 'New Magic Number Lay Bets',
                 pointInterval: 24 * 3600 * 1000,
-                pointStart: " (first-race-date-in-millis race-day-back-results)  ",
-                data: [" (chart-data race-day-back-results) 
+                pointStart: " (first-race-date-in-millis race-day-lay-new-magic-number-results)  ",
+                data: [" (chart-data race-day-lay-new-magic-number-results) 
 
                 "
           ]
@@ -164,14 +167,14 @@
   (GET "/"
        []
        (index-html (running-total (race-day-lay-results) running-lay-total)
-                   (running-total (race-day-back-results) running-back-total)
-                   (running-total (race-day-lay-results (all-below -10)) running-lay-total)))
+                   (running-total (race-day-lay-results (first-race-only) core/new-magic-number) running-lay-total)
+                   (running-total (race-day-lay-results (all-below -11) core/new-magic-number) running-lay-total)))
   (route/files "/" {:root "public"}))
 
 (defn start
   ([] (start 8080))
   ( [port]
-      (ring/run-jetty (wrap-reload #'routes '(gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
+      (ring/run-jetty (wrap-reload #'routes '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
       ;;(ring/run-jetty #'routes {:port port :join? false})
       ))
 
