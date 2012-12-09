@@ -19,7 +19,11 @@
   [f]
   (fn [races]
     (for [race (f races)]
-       (:finish (first (:horses race)))
+      {:finish (:finish (first (:horses race)))
+       :venue (:venue race)
+       :time (:time race)
+       :name (:name (first (:horses race)))
+       :magic-number (:magic-number (first (:horses race)))}
       )))
 
 (defn first-race-only
@@ -47,8 +51,10 @@
   ([races-f finish-f] (race-day-results races-f finish-f core/magic-number))
   ([races-f finish-f magic-number-f]
      (for [race-day (db/race-days-with-results)]
-       {:race_date (.getTime (:race_date race-day))
-        :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))})))
+       (let [finishes (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))]
+         {:race_date (.getTime (:race_date race-day))
+          :finish (map :finish finishes)
+          :finishes finishes}))))
 
 (defn race-day-lay-results
   "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number)"
@@ -95,19 +101,35 @@
   (def race-totals (atom []))
   (doseq [race-day race-days]
     (swap! total running-f race-day)
-    (swap! race-totals conj {:race_date (:race_date race-day) :total @total}))
+    (swap! race-totals conj {:race_date (:race_date race-day) :total @total :finishes (:finishes race-day)}))
   @race-totals)
 
 (defn subs-miss-end
   "returns a string with the last char substringed out"
   [s]
-  (subs s 0 (- (count s) 1)))
+  (if (< 0 (count s)) (subs s 0 (- (count s) 1)) s))
+
+(defn finishes [results]
+  (apply str
+         (for [finish (:finishes results)]
+           (str "{"
+                "finish : " (:finish finish) ","
+                "name : '" (:name finish) "'"
+                ","
+                "venue : '" (:venue finish) "'"
+                ",time : '" (:time finish) "'"
+                ",mn : '" (:magic-number finish) "'"
+                "},"))))
 
 (defn chart-data
   "mung the result data into a comma separated list for the chart data in the HTML page"
   [race-day-results]
-  (def data (apply str (apply vector (map #(str % ",")  (map :total race-day-results)))))
-  (prn data)
+  
+  (def data (apply str (for [result race-day-results]
+                         (str "{y : " (:total result)
+                              ", finishes : [" (subs-miss-end (finishes result))
+                              "]},"))))
+  (prn "chart data:" data)
   (subs-miss-end data))
 
 (defn chart-series
@@ -154,6 +176,16 @@
                 text: '',
                 x: -20
             },
+            tooltip: {
+                formatter: function() {
+                var s = '';
+                for (var i=0,len=this.point.finishes.length; i<len; i++)
+                {
+                   s = s + '<b>' + this.point.finishes[i].finish + '</b> ' + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + ' ' + this.point.finishes[i].name + ' ' + this.point.finishes[i].mn + '<br/>'
+                }
+                return s;
+                }
+            },
             xAxis: {
                 type: 'datetime'
                 },
@@ -195,7 +227,6 @@
                                                                               running-lay-total)}
                     {:title "All Below Threshold" :value (running-total (race-day-lay-results
                                                                          (finishing-positions
-                                                                          ;;(first-race-only)
                                                                           (below-magic-number-of -3)
                                                                           (odds-difference-less-than 2))
                                                                          core/new-magic-number)
