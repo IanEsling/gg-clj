@@ -234,7 +234,7 @@
                     {:title "All Below Threshold" :value (running-total (race-day-lay-results
                                                                          (finishing-positions
                                                                           (below-magic-number-of -3)
-                                                                          (odds-difference-less-than 2))
+                                                                          (odds-difference-less-than 4))
                                                                          core/new-magic-number)
                                                                         running-lay-total)}]))
   (route/files "/" {:root "public"}))
