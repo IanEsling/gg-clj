@@ -17,16 +17,14 @@
 (defn finish-positions-for-races [f]
   (fn [races]
     (for [race (f races)]
-      (:finish (first (:horses race))))
-    ))
+       (:finish (first (:horses race)))
+      )))
 
 (defn first-race-only []
-  (finish-positions-for-races (comp vector first))
-  )
+  (comp vector first))
 
 (defn finishing-positions [& fs]
-  (finish-positions-for-races
-   (apply comp fs)))
+    (finish-positions-for-races (apply comp fs)))
 
 (defn below-magic-number-of [magic-number]
   (partial filter #(< (:lowest-magic-number %) magic-number)))
@@ -39,13 +37,13 @@
   ([races-f finish-f magic-number-f]
      (for [race-day (db/race-days-with-results)]
        {:race_date (.getTime (:race_date race-day))
-        :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))
-        })))
+        :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))})))
 
 (defn race-day-lay-results
-  ([] (race-day-lay-results (first-race-only)))
-  ([finish-f] (race-day-lay-results finish-f core/magic-number))
+  ([] (prn "race-day-lay-results with no args...") (race-day-lay-results (finishing-positions (first-race-only))))
+  ([finish-f] (prn "race-day-lay-results with " finish-f) (race-day-lay-results finish-f core/magic-number))
   ([finish-f magic-number-f]
+     (prn "race-day-lay-results with " finish-f magic-number-f)
      (race-day-results core/calculate-lay-bet-races finish-f magic-number-f)))
 
 (defn race-day-back-results
@@ -80,28 +78,29 @@
     (swap! race-totals conj {:race_date (:race_date race-day) :total @total}))
   @race-totals)
 
+(defn subs-miss-end [s]
+  (subs s 0 (- (count s) 1)))
+
 (defn chart-data [race-day-results]
   (def data (apply str (apply vector (map #(str % ",")  (map :total race-day-results)))))
   (prn data)
-  (subs data 0 (- (count data) 1)))
+  (subs-miss-end data))
 
 (defn chart-series [running-totals]
-  (apply str
-         (for [running-total running-totals]
-           (str "{
+  (subs-miss-end (apply str
+                        (for [running-total running-totals]
+                          (str "{
                 name: '"
-                (:title running-total)
-                "',
+                               (:title running-total)
+                               "',
                 pointInterval: 24 * 3600 * 1000,
                 pointStart: "
-                (first-race-date-in-millis (:value running-total))
-                ",
+                               (first-race-date-in-millis (:value running-total))
+                               ",
                 data: ["
-                (chart-data (:value running-total))
-                "]},"
-                )
-
-           )))
+                               (chart-data (:value running-total))
+                               "]},"
+                               )))))
              
 (defn index-html
   "HTML for betting page"
@@ -163,7 +162,10 @@
   (GET "/"
        []
        (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                    {:title "New Magic Number Lay Bets" :value (running-total (race-day-lay-results (first-race-only) core/new-magic-number) running-lay-total)}
+                    {:title "New Magic Number Lay Bets" :value (running-total (race-day-lay-results
+                                                                               (finishing-positions (first-race-only))
+                                                                               core/new-magic-number)
+                                                                              running-lay-total)}
                     {:title "All Below Threshold" :value (running-total (race-day-lay-results
                                                                          (finishing-positions (below-magic-number-of -11)
                                                                                               (odds-difference-less-than 3))
