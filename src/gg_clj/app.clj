@@ -183,8 +183,14 @@
                 {
                    s = s + '<b>' + this.point.finishes[i].finish + '</b> ' + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + ' ' + this.point.finishes[i].name + ' ' + this.point.finishes[i].mn + '<br/>'
                 }
+                if (s == '')
+                {
+                  return 'No Bet.';
+                } else
+                {  
                 return s;
                 }
+             }
             },
             xAxis: {
                 type: 'datetime'
