@@ -14,25 +14,36 @@
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
 
-(defn finish-positions-for-races [f]
+(defn finish-positions-for-races
+  "returns a function that returns a list of finishing positions for a list of races after it's been filtered by the given function"
+  [f]
   (fn [races]
     (for [race (f races)]
        (:finish (first (:horses race)))
       )))
 
-(defn first-race-only []
+(defn first-race-only
+  "function used in composing finishing position functions.  Filters out every race except the first one."
+  []
   (comp vector first))
 
-(defn finishing-positions [& fs]
+(defn finishing-positions
+  "return a function that returns a list of finishing positions for a list of races based on composing the functions given."
+  [& fs]
     (finish-positions-for-races (apply comp fs)))
 
-(defn below-magic-number-of [magic-number]
+(defn below-magic-number-of
+  "function used in composing finishing position functions.  Filters out races with a magic number greater than that given."
+  [magic-number]
   (partial filter #(< (:lowest-magic-number %) magic-number)))
 
-(defn odds-difference-less-than [odds-diff]
+(defn odds-difference-less-than
+  "function used in composing finishing position functions.  Filters out races with an odds difference greater than that given."
+  [odds-diff]
   (partial filter #(> odds-diff (:odds-diff %))))
 
 (defn race-day-results
+  "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number)"
   ([races-f finish-f] (race-day-results races-f finish-f core/magic-number))
   ([races-f finish-f magic-number-f]
      (for [race-day (db/race-days-with-results)]
@@ -40,37 +51,46 @@
         :finish (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))})))
 
 (defn race-day-lay-results
-  ([] (prn "race-day-lay-results with no args...") (race-day-lay-results (finishing-positions (first-race-only))))
-  ([finish-f] (prn "race-day-lay-results with " finish-f) (race-day-lay-results finish-f core/magic-number))
+  "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number)"
+  ([] (race-day-lay-results (finishing-positions (first-race-only))))
+  ([finish-f]  (race-day-lay-results finish-f core/magic-number))
   ([finish-f magic-number-f]
-     (prn "race-day-lay-results with " finish-f magic-number-f)
      (race-day-results core/calculate-lay-bet-races finish-f magic-number-f)))
 
 (defn race-day-back-results
+  "take all the back bets for all race days from race-day-results with a function that determines which finishes we're interested in.  Defaults to just betting on the first race (the highest magic number)"
   ([] (race-day-back-results (first-race-only)))
   ([finish-f]
      (race-day-results core/calculate-back-bet-races finish-f)))
 
-(defn first-race-date-in-millis [race-day-results]
+(defn first-race-date-in-millis
+  "gets earliest race date in millis"
+  [race-day-results]
   (reduce (fn [t n]
             (prn t n)
             (if (< t n) t n)) (.getTime (java.util.Date.))
           (map :race_date race-day-results)))
 
-(defn running-lay-total [x race-day]
+(defn running-lay-total
+  "adds the points total for lay betting for the race day's finishes onto x"
+  [x race-day]
   (prn (:finish race-day))
   (with-precision 5 (+ x (reduce (fn [tot finish]
                                    (+ tot (if (nil? finish) 0  (if (not= 1M (BigDecimal. finish)) 0.95M -2.0M))))
                                  0M
                                  (:finish race-day)))))
 
-(defn running-back-total [x race-day]
+(defn running-back-total
+  "adds the points total for back betting for the race day's finishes onto x"
+  [x race-day]
    (with-precision 5 (+ x (reduce (fn [tot finish]
                                     (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M)))
                                  0M
                                  (:finish race-day)))))
 
-(defn running-total [race-days running-f]
+(defn running-total
+  "produces a map of race dates with a running total of results.  The running-f is called for each race day and knows how to add up the points for the finishing positions on that race day (there's a lay running f and a back betting one)"
+  [race-days running-f]
   (def total (atom 0M))
   (def race-totals (atom []))
   (doseq [race-day race-days]
@@ -78,15 +98,21 @@
     (swap! race-totals conj {:race_date (:race_date race-day) :total @total}))
   @race-totals)
 
-(defn subs-miss-end [s]
+(defn subs-miss-end
+  "returns a string with the last char substringed out"
+  [s]
   (subs s 0 (- (count s) 1)))
 
-(defn chart-data [race-day-results]
+(defn chart-data
+  "mung the result data into a comma separated list for the chart data in the HTML page"
+  [race-day-results]
   (def data (apply str (apply vector (map #(str % ",")  (map :total race-day-results)))))
   (prn data)
   (subs-miss-end data))
 
-(defn chart-series [running-totals]
+(defn chart-series
+  "produce the series for the chart configuration, produce a different series for each running total passed in"
+  [running-totals]
   (subs-miss-end (apply str
                         (for [running-total running-totals]
                           (str "{
@@ -159,6 +185,7 @@
                   (html [:div {:id "container"}])])]))
 
 (defroutes routes
+  "url routes for the web app to serve"
   (GET "/"
        []
        (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
@@ -176,8 +203,9 @@
   (route/files "/" {:root "public"}))
 
 (defn start
+  "start web app server up, defaults to 8080, 'wrap-reload' only works in development mode, need to comment out the ring reload lib as well"
   ([] (start 8080))
-  ( [port]
+  ([port]
       (ring/run-jetty (wrap-reload #'routes '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
       ;;(ring/run-jetty #'routes {:port port :join? false})
       ))
