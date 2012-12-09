@@ -60,7 +60,7 @@
 (defn running-lay-total [x race-day]
   (prn (:finish race-day))
   (with-precision 5 (+ x (reduce (fn [tot finish]
-                                   (+ tot (if (not= 1M (BigDecimal. finish)) 0.95M -2.0M)))
+                                   (+ tot (if (nil? finish) 0  (if (not= 1M (BigDecimal. finish)) 0.95M -2.0M))))
                                  0M
                                  (:finish race-day)))))
 
@@ -167,8 +167,10 @@
                                                                                core/new-magic-number)
                                                                               running-lay-total)}
                     {:title "All Below Threshold" :value (running-total (race-day-lay-results
-                                                                         (finishing-positions (below-magic-number-of -11)
-                                                                                              (odds-difference-less-than 3))
+                                                                         (finishing-positions
+                                                                          ;;(first-race-only)
+                                                                          (below-magic-number-of -3)
+                                                                          (odds-difference-less-than 2))
                                                                          core/new-magic-number)
                                                                         running-lay-total)}]))
   (route/files "/" {:root "public"}))
