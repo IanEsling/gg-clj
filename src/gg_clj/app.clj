@@ -20,6 +20,7 @@
   (fn [races]
     (for [race (f races)]
       {:finish (:finish (first (:horses race)))
+       :odds (:odds (first (:horses race)))
        :venue (:venue race)
        :time (:time race)
        :name (:name (first (:horses race)))
@@ -102,7 +103,8 @@
   (GET "/"
        []
        (page/index [{:title "Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                    {:title "Back Bets" :value (running-total (race-day-back-results) running-back-total)}]))
+                    {:title "Back Bets" :value (running-total (race-day-back-results) running-back-total)}]
+                   [page/link-lay page/link-back]))
   (GET "/lay"
        []
        (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
@@ -116,14 +118,29 @@
                                                                          core/new-magic-number
                                                                          core/third-odds-difference)
                                                                         running-lay-total)}
-                    ]))
+                    ]
+                   [page/link-back page/link-index]))
+  (GET "/back"
+       []
+       (page/index [{:title "Original Back Bets" :value (running-total (race-day-back-results) running-back-total)}
+                    {:title "New Back Bets" :value (running-total (race-day-back-results
+                                                                            (finishing-positions (first-race-only))
+                                                                            core/new-magic-number)
+                                                                 running-back-total)}
+                    ;; {:title "Everything Over 5" :value (running-total (race-day-back-results
+                    ;;                                                      (finishing-positions (below-magic-number-of -5))
+                    ;;                                                      core/new-magic-number
+                    ;;                                                      core/third-odds-difference)
+                    ;;                                                     running-back-total)}
+                    ]
+                   [page/link-lay page/link-index]))
   (route/files "/" {:root "public"}))
 
 (defn start
   "start web app server up, defaults to 8080, 'wrap-reload' only works in development mode, need to comment out the ring reload lib as well"
   ([] (start 8080))
   ([port]
-      (ring/run-jetty (wrap-reload #'routes '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db)) {:port port :join? false})
+      (ring/run-jetty (wrap-reload #'routes '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page)) {:port port :join? false})
       ;;(ring/run-jetty #'routes {:port port :join? false})
       ))
 

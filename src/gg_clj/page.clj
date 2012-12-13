@@ -1,6 +1,15 @@
 (ns gg-clj.page
   (:use hiccup.core))
 
+(defn link-index []
+  [:p [:a {:href "/"} "Home"]])
+
+(defn link-lay []
+  [:p [:a {:href "/lay"} "Tweak Lay Betting"]])
+
+(defn link-back []
+  [:p [:a {:href "/back"} "Tweak Back Betting"]])
+
 (defn subs-miss-end
   "returns a string with the last char substringed out"
   [s]
@@ -16,6 +25,7 @@
                 "venue : '" (:venue finish) "'"
                 ",time : '" (:time finish) "'"
                 ",mn : '" (:magic-number finish) "'"
+                ",odds : '" (:odds finish) "'"
                 "},"))))
 
 (defn first-race-date-in-millis
@@ -59,7 +69,7 @@
 
 (defn index
   "HTML for betting page"
-  [running-totals]
+  [running-totals links]
     (html [:html 
            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                   [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
@@ -88,7 +98,8 @@
                 var s = '';
                 for (var i=0,len=this.point.finishes.length; i<len; i++)
                 {
-                   s = s + '<b>' + this.point.finishes[i].finish + '</b> ' + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + ' ' + this.point.finishes[i].name + ' ' + this.point.finishes[i].mn + '<br/>'
+                   s = s + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + '<br/>' 
++ this.point.finishes[i].name + '<b> finished: ' + this.point.finishes[i].finish + '</b><br/>magic number: ' + this.point.finishes[i].mn + ' <br/>odds: ' + this.point.finishes[i].odds + '<br/>'
                 }
                 if (s == '')
                 {
@@ -116,8 +127,8 @@
                 layout: 'vertical',
                 align: 'right',
                 verticalAlign: 'top',
-                x: -10,
-                y: 100,
+                x: 0,
+                y: 0,
                 borderWidth: 0
             },
             series: ["
@@ -128,7 +139,8 @@
 });")]])
            (html [:body
                   [:div {:id "container"}]
-                  [:a {:href "/lay"} (str  "Tweak Lays")]
+                  [:div {:id "links"}
+                   (map #(%) links)]
                   ])
           
            ]))
