@@ -102,15 +102,21 @@
   (GET "/"
        []
        (page/index [{:title "Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                    {:title "Back Bets" :value (running-total (race-day-back-results) running-back-total)}])
-       ;; (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-       ;;              {:title "New Odds Diff Lay Bets" :value (running-total (race-day-lay-results
-       ;;                                                                      (finishing-positions (first-race-only))
-       ;;                                                                      core/magic-number
-       ;;                                                                      core/third-odds-difference)
-       ;;                                                                     running-lay-total)}
-       ;;              ]))
-       )
+                    {:title "Back Bets" :value (running-total (race-day-back-results) running-back-total)}]))
+  (GET "/lay"
+       []
+       (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+                    {:title "New Lay Bets" :value (running-total (race-day-lay-results
+                                                                            (finishing-positions (first-race-only))
+                                                                            core/new-magic-number
+                                                                            core/third-odds-difference)
+                                                                 running-lay-total)}
+                    {:title "Everything Under -5" :value (running-total (race-day-lay-results
+                                                                         (finishing-positions (below-magic-number-of -5))
+                                                                         core/new-magic-number
+                                                                         core/third-odds-difference)
+                                                                        running-lay-total)}
+                    ]))
   (route/files "/" {:root "public"}))
 
 (defn start

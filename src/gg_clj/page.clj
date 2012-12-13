@@ -127,4 +127,8 @@
     
 });")]])
            (html [:body
-                  (html [:div {:id "container"}])])]))
+                  [:div {:id "container"}]
+                  [:a {:href "/lay"} (str  "Tweak Lays")]
+                  ])
+          
+           ]))
