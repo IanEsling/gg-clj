@@ -50,14 +50,22 @@
   [race]
   (sort (map #(numeric-odds %) (map #(:odds %) (:horses race)))))
 
-(defn add-difference-in-odds
-  "add to a race the difference in odds between the first and second favourites"
-  [race]
-  (let [odds (sorted-odds race)
-    	first (first odds)
-        second (second odds)]
+(defn odds-difference [first-f second-f race]
+  (let [odds (sorted-odds race)]
+    (assoc race :odds-diff (- (second-f odds) (first-f odds))))
+  )
 
-  	(assoc race :odds-diff (- second first))))
+(defn first-odds-difference [second-f race]
+  ((partial odds-difference first) second-f race)
+  )
+
+(defn second-odds-difference [race]
+  ((partial first-odds-difference second race))
+  )
+
+(defn third-odds-difference [race]
+  ((partial first-odds-difference (comp second rest)  race))
+  )
 
 (defn remove-non-favourites
   "remove any horses that don't have the favourite's odds (may have joint favourites in a race)"
@@ -106,9 +114,10 @@
 (defn calculate-lay-bet-race
   "calculate all the bits needed for lay betting on a race"
   ([race] (calculate-lay-bet-race race magic-number))
-  ([race magic-num-f]
+  ([race magic-num-f] (calculate-lay-bet-race race magic-num-f second-odds-difference))
+  ([race magic-num-f odds-diff-f]
      (-> (add-bettable race) 
-         (if-bettable add-difference-in-odds) 
+         (if-bettable odds-diff-f) 
          (if-bettable (partial add-magic-number magic-num-f)) 
          (if-bettable remove-non-favourites) 
          (if-bettable get-lowest-magic-number))))
@@ -118,7 +127,7 @@
   ([race] (calculate-back-bet-race race magic-number))
   ([race magic-num-f]
      (-> (add-has-horses race)
-         (if-has-horses add-difference-in-odds) 
+         (if-has-horses second-odds-difference) 
          (if-has-horses remove-non-favourites) 
          (if-has-horses (partial add-magic-number magic-num-f)) 
          (if-has-horses get-highest-magic-number))))

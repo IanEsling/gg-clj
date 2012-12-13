@@ -4,9 +4,9 @@
   (:use [gg-clj.mail :as mail])
   (:use [gg-clj.web :as web])
   (:use [gg-clj.core :as core])
+  (:use [gg-clj.page :as page])
   (:use clojure.tools.logging)
   (:use clj-logging-config.log4j)
-  (:use hiccup.core)
   (:use [compojure.core :only [defroutes GET]])
   (:use ring.middleware.reload)
   (:import [org.joda.time.format DateTimeFormat])
@@ -59,23 +59,16 @@
 (defn race-day-lay-results
   "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number)"
   ([] (race-day-lay-results (finishing-positions (first-race-only))))
-  ([finish-f]  (race-day-lay-results finish-f core/magic-number))
-  ([finish-f magic-number-f]
-     (race-day-results core/calculate-lay-bet-races finish-f magic-number-f)))
+  ([finish-f] (race-day-lay-results finish-f core/magic-number))
+  ([finish-f magic-number-f] (race-day-lay-results finish-f magic-number-f core/second-odds-difference))
+  ([finish-f magic-number-f odds-diff-f] (race-day-results core/calculate-lay-bet-races finish-f magic-number-f)))
 
 (defn race-day-back-results
   "take all the back bets for all race days from race-day-results with a function that determines which finishes we're interested in.  Defaults to just betting on the first race (the highest magic number)"
-  ([] (race-day-back-results (first-race-only)))
-  ([finish-f]
-     (race-day-results core/calculate-back-bet-races finish-f)))
-
-(defn first-race-date-in-millis
-  "gets earliest race date in millis"
-  [race-day-results]
-  (reduce (fn [t n]
-            (prn t n)
-            (if (< t n) t n)) (.getTime (java.util.Date.))
-          (map :race_date race-day-results)))
+  ([] (race-day-back-results (finishing-positions (first-race-only))))
+  ([finish-f] (race-day-back-results finish-f core/magic-number))
+  ([finish-f magic-number-f]
+     (race-day-results core/calculate-back-bet-races finish-f magic-number-f)))
 
 (defn running-lay-total
   "adds the points total for lay betting for the race day's finishes onto x"
@@ -104,139 +97,20 @@
     (swap! race-totals conj {:race_date (:race_date race-day) :total @total :finishes (:finishes race-day)}))
   @race-totals)
 
-(defn subs-miss-end
-  "returns a string with the last char substringed out"
-  [s]
-  (if (< 0 (count s)) (subs s 0 (- (count s) 1)) s))
-
-(defn finishes [results]
-  (apply str
-         (for [finish (:finishes results)]
-           (str "{"
-                "finish : " (:finish finish) ","
-                "name : '" (:name finish) "'"
-                ","
-                "venue : '" (:venue finish) "'"
-                ",time : '" (:time finish) "'"
-                ",mn : '" (:magic-number finish) "'"
-                "},"))))
-
-(defn chart-data
-  "mung the result data into a comma separated list for the chart data in the HTML page"
-  [race-day-results]
-  
-  (def data (apply str (for [result race-day-results]
-                         (str "{y : " (:total result)
-                              ", finishes : [" (subs-miss-end (finishes result))
-                              "]},"))))
-  (prn "chart data:" data)
-  (subs-miss-end data))
-
-(defn chart-series
-  "produce the series for the chart configuration, produce a different series for each running total passed in"
-  [running-totals]
-  (subs-miss-end (apply str
-                        (for [running-total running-totals]
-                          (str "{
-                name: '"
-                               (:title running-total)
-                               "',
-                pointInterval: 24 * 3600 * 1000,
-                pointStart: "
-                               (first-race-date-in-millis (:value running-total))
-                               ",
-                data: ["
-                               (chart-data (:value running-total))
-                               "]},"
-                               )))))
-             
-(defn index-html
-  "HTML for betting page"
-  [running-totals]
-    (html [:html 
-           (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
-                  [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
-                  [:script {:type "text/javascript" :src "/js/highcharts.js"}]
-                  [:script {:type "text/javascript"}
-                   (str "$(function () {
-    var chart;
-    $(document).ready(function() {
-        chart = new Highcharts.Chart({
-            chart: {
-                renderTo: 'container',
-                marginRight: 130,
-                marginBottom: 25,
-                type: 'spline'
-            },
-            title: {
-                text: 'Betting Points',
-                x: -20 //center
-            },
-            subtitle: {
-                text: '',
-                x: -20
-            },
-            tooltip: {
-                formatter: function() {
-                var s = '';
-                for (var i=0,len=this.point.finishes.length; i<len; i++)
-                {
-                   s = s + '<b>' + this.point.finishes[i].finish + '</b> ' + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + ' ' + this.point.finishes[i].name + ' ' + this.point.finishes[i].mn + '<br/>'
-                }
-                if (s == '')
-                {
-                  return 'No Bet.';
-                } else
-                {  
-                return s;
-                }
-             }
-            },
-            xAxis: {
-                type: 'datetime'
-                },
-            yAxis: {
-                title: {
-                    text: 'Number of Points'
-                },
-                plotLines: [{
-                    value: 0,
-                    width: 1,
-                    color: '#808080'
-                }]
-            },
-            legend: {
-                layout: 'vertical',
-                align: 'right',
-                verticalAlign: 'top',
-                x: -10,
-                y: 100,
-                borderWidth: 0
-            },
-            series: ["
-                        (chart-series running-totals)
-         "]});
-    });
-    
-});")]])
-           (html [:body
-                  (html [:div {:id "container"}])])]))
-
 (defroutes routes
   "url routes for the web app to serve"
   (GET "/"
        []
-       (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                    {:title "New Magic Number Lay Bets" :value (running-total (race-day-lay-results
-                                                                               (finishing-positions (first-race-only))
-                                                                               core/new-magic-number)
-                                                                              running-lay-total)}
-                    {:title "All Below Threshold" :value (running-total (race-day-lay-results
-                                                                         (finishing-positions
-                                                                          (below-magic-number-of -3)
-                                                                          (odds-difference-less-than 4))
-                                                                         core/new-magic-number)
-                                                                        running-lay-total)}]))
+       (page/index [{:title "Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+                    {:title "Back Bets" :value (running-total (race-day-back-results) running-back-total)}])
+       ;; (index-html [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+       ;;              {:title "New Odds Diff Lay Bets" :value (running-total (race-day-lay-results
+       ;;                                                                      (finishing-positions (first-race-only))
+       ;;                                                                      core/magic-number
+       ;;                                                                      core/third-odds-difference)
+       ;;                                                                     running-lay-total)}
+       ;;              ]))
+       )
   (route/files "/" {:root "public"}))
 
 (defn start
