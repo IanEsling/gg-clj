@@ -82,13 +82,13 @@
          (+ (:odds-diff race)(:tips horse))	
            (:number_of_runners race)))
 
-(defn new-magic-number [horse race]
-  (-
-   (- 
-    (+ (* 1 (:odds-diff race)) (* 5 (:tips horse)))
-    (* 1.5 (:number_of_runners race)))
-   (* 0.25 (reduce (fn [mn h] (if (= (:name h) (:name horse)) mn (+ mn (:tips h)))) 0 (:horses race))))
-  )
+(defn magic-number-f [odds-diff tips number-of-runners other-tips]
+  (fn [horse race]
+    (-
+     (-
+      (+ (* odds-diff (:odds-diff race)) (* tips (:tips horse)))
+      (* number-of-runners (:number_of_runners race)))
+     (* other-tips (reduce (fn [mn h] (if (= (:name h) (:name horse)) mn (+ mn (:tips h)))) 0 (:horses race))))))
 
 (defn add-magic-number
   "calculate the magic number for each horse in a race"
