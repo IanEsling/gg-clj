@@ -44,17 +44,17 @@
 (fact "should calculate if race is bettable"
 	(calculate-lay-bet-race race) => (contains {:bettable true})
 	(calculate-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
-											(if (= (:name horse) "h1")
-                                          		(assoc horse :odds "3/1")
-                                              	horse)))) 
+                                                      (if (= (:name horse) "h1")
+                                                        (assoc horse :odds "3/1")
+                                                        horse)))) 
       => (contains {:bettable false})
 	(calculate-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
-											(if (= (:name horse) "h1")
-                                          		(assoc horse :odds "Evs")
-                                              horse))))
+                                                      (if (= (:name horse) "h1")
+                                                        (assoc horse :odds "Evs")
+                                                        horse))))
       => (contains {:bettable true})
 	(calculate-lay-bet-race (assoc race :horses (for [horse (:horses race)] 
-											(if (= (:name horse) "h1")
-                                          		(assoc horse :odds "99/100")
-                                              horse))))
+                                                      (if (= (:name horse) "h1")
+                                                        (assoc horse :odds "99/100")
+                                                        horse))))
       => (contains {:bettable false}))
