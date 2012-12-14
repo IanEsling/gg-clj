@@ -1,5 +1,6 @@
 (ns gg-clj.app-test
   (:use gg-clj.app)
+  (:use gg-clj.page)
   (:use midje.sweet))
 
 (def results [{:race_date 123455 :finish [9]} {:race_date 123456 :finish [1]}{:race_date 123457 :finish [2]}{:race_date 123458 :finish [3]}])
