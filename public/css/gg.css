@@ -1,14 +1,46 @@
 body {
     font-family: Helvetica, Arial, sans-serif; 
     background-color: #90ee90;
+    margin: 0px;
 }
 
-div {
-    margin-top: 30px;
+div#links {
+    background-color: black;
+    padding: 10px;
+}
+
+div#links li {
+    list-style-type: none;
+    display: inline;
+}
+
+div#links a {
+    text-decoration: none;
+    color: white;
 }
 
 a {
     font-size: 1.5em;
     margin: 30px;
     font-weight: bold;   
+}
+
+div#links a:link {
+    color: white;
+}
+
+div#links a:visited {
+    color: white;
+}
+
+div#links a:hover {
+    color: #90ee90;
+}
+
+div#links a:active {
+    color: #90ee90;
+}
+
+div#form {
+    margin: 50px;
 }

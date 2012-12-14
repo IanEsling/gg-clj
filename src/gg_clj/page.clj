@@ -1,14 +1,15 @@
 (ns gg-clj.page
-  (:use hiccup.core))
+  (:use hiccup.core)
+  (:use hiccup.form))
 
 (defn link-index []
-  [:p [:a {:href "/"} "Home"]])
+  [:li [:a {:href "/"} "Home"]])
 
 (defn link-lay []
-  [:p [:a {:href "/lay"} "Tweak Lay Betting"]])
+  [:li [:a {:href "/lay"} "Tweak Lay Betting"]])
 
 (defn link-back []
-  [:p [:a {:href "/back"} "Tweak Back Betting"]])
+  [:li [:a {:href "/back"} "Tweak Back Betting"]])
 
 (defn subs-miss-end
   "returns a string with the last char substringed out"
@@ -34,12 +35,12 @@
   (reduce (fn [t n]
             (prn t n)
             (if (< t n) t n)) (.getTime (java.util.Date.))
-          (map :race_date race-day-results)))
+            (map :race_date race-day-results)))
 
 (defn chart-data
   "mung the result data into a comma separated list for the chart data in the HTML page"
   [race-day-results]
-  
+
   (def data (apply str (for [result race-day-results]
                          (str "{y : " (:total result)
                               ", finishes : [" (subs-miss-end (finishes result))
@@ -64,18 +65,37 @@
                                (chart-data (:value running-total))
                                "]},"
                                )))))
-             
 
+(defn form
+  ([] (form 1 1 1 1))
+  ([odds-diff tips runners other-tips]
+     (form-to [:post "/lay"]
+              "Magic number for favourite in new lay bets:"
+              [:br]              
+              (text-field {:size 5 :maxlength 6} "odds-diff" odds-diff)
+              (label "odds-diff" " x odds difference between 1st and 2nd favourite + ")
+              [:br]
+              (text-field {:size 5 :maxlength 6} "tips" tips)
+              (label "tips" " x number of tips on favourite - ")
+              [:br]
+              (text-field {:size 5 :maxlength 6} "runners" runners)
+              (label "runners" " x Number of Runners - ")
+              [:br]
+              (text-field {:size 5 :maxlength 6} "other-tips" other-tips)
+              (label "other-tips" " x number of tips on other horses ")
+              [:br]
+              (submit-button "Calculate" ))))
 
 (defn index
   "HTML for betting page"
-  [running-totals links]
-    (html [:html 
-           (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
-                  [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
-                  [:script {:type "text/javascript" :src "/js/highcharts.js"}]
-                  [:script {:type "text/javascript"}
-                   (str "$(function () {
+  ([running-totals links] (index running-totals links nil))
+  ([running-totals links form-f]
+     (html [:html
+            (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
+                   [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
+                   [:script {:type "text/javascript" :src "/js/highcharts.js"}]
+                   [:script {:type "text/javascript"}
+                    (str "$(function () {
     var chart;
     $(document).ready(function() {
         chart = new Highcharts.Chart({
@@ -98,14 +118,14 @@
                 var s = '';
                 for (var i=0,len=this.point.finishes.length; i<len; i++)
                 {
-                   s = s + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + '<br/>' 
+                   s = s + this.point.finishes[i].time + ' ' + this.point.finishes[i].venue + '<br/>'
 + this.point.finishes[i].name + '<b> finished: ' + this.point.finishes[i].finish + '</b><br/>magic number: ' + this.point.finishes[i].mn + ' <br/>odds: ' + this.point.finishes[i].odds + '<br/>'
                 }
                 if (s == '')
                 {
                   return 'No Bet.';
                 } else
-                {  
+                {
                 return s;
                 }
              }
@@ -132,15 +152,18 @@
                 borderWidth: 0
             },
             series: ["
-                        (chart-series running-totals)
-         "]});
+                         (chart-series running-totals)
+                         "]});
     });
-    
+
 });")]])
-           (html [:body
-                  [:div {:id "container"}]
-                  [:div {:id "links"}
-                   (map #(%) links)]
-                  ])
-          
-           ]))
+            (html [:body
+                   [:div {:id "links"}
+                    [:ul
+                     (map #(%) links)]]
+                   [:div {:id "container"}]
+                   [:div {:id "form"}
+                    (if-not (nil? form-f) (form-f))]
+                   ])
+
+            ])))

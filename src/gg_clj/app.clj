@@ -7,8 +7,9 @@
   (:use [gg-clj.page :as page])
   (:use clojure.tools.logging)
   (:use clj-logging-config.log4j)
-  (:use [compojure.core :only [defroutes GET]])
-;;  (:use ring.middleware.reload) ;;Dev mode only
+  (:use [compojure.core :only [defroutes GET POST]])
+  (:use [ring.middleware.params :only [wrap-params]])
+  (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
@@ -100,13 +101,30 @@
     (swap! race-totals conj {:race_date (:race_date race-day) :total @total :finishes (:finishes race-day)}))
   @race-totals)
 
+(defn lay-bets-page [magic-number-f form-f]
+       (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+                    {:title "New Lay Bets" :value (running-total (race-day-lay-results
+                                                                            (finishing-positions (first-race-only))
+                                                                            magic-number-f
+                                                                            core/third-odds-difference)
+                                                                 running-lay-total)}
+                    {:title "Everything Under -5" :value (running-total (race-day-lay-results
+                                                                         (finishing-positions (below-magic-number-of -5))
+                                                                         magic-number-f
+                                                                         core/third-odds-difference)
+                                                                        running-lay-total)}
+                    ]
+                   [page/link-back page/link-index]
+                   form-f))
+
 (defroutes routes
   "url routes for the web app to serve"
   (GET "/"
        []
        (page/index [{:title "Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
                     {:title "Back Bets" :value (running-total (race-day-back-results) running-back-total)}]
-                   [page/link-lay page/link-back]))
+                   [page/link-lay page/link-back]
+                   nil))
   (GET "/lay"
        []
        (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
@@ -121,7 +139,14 @@
                                                                          core/third-odds-difference)
                                                                         running-lay-total)}
                     ]
-                   [page/link-back page/link-index]))
+                   [page/link-back page/link-index]
+                   page/form))
+  
+  (POST "/lay"
+        [odds-diff tips runners other-tips]
+        (lay-bets-page (core/magic-number-f (Double/valueOf odds-diff) (Double/valueOf tips) (Double/valueOf runners) (Double/valueOf other-tips))
+                       (partial page/form (Double/valueOf odds-diff) (Double/valueOf tips) (Double/valueOf runners) (Double/valueOf other-tips))))
+  
   (GET "/back"
        []
        (page/index [{:title "Original Back Bets" :value (running-total (race-day-back-results) running-back-total)}
@@ -135,17 +160,18 @@
                     ;;                                                      core/third-odds-difference)
                     ;;                                                     running-back-total)}
                     ]
-                   [page/link-lay page/link-index]))
+                   [page/link-lay page/link-index]
+                   nil))
   (route/files "/" {:root "public"}))
+
+(def app (wrap-params routes))
 
 (defn start
   "start web app server up, defaults to 8080, 'wrap-reload' only works in development mode, need to comment out the ring reload lib as well"
   ([] (start 8080))
   ([port]
-;;      (ring/run-jetty (wrap-reload #'routes '(gg-clj.core gg-clj.app
-     ;;      gg-clj.mail gg-clj.web gg-clj.db gg-clj.page)) {:port
-     ;;      port :join? false}) ;;Dev mode only
-      (ring/run-jetty #'routes {:port port :join? false})
+     (ring/run-jetty (wrap-reload app '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page)) {:port port :join? false}) ;;Dev mode only
+;;      (ring/run-jetty #'routes {:port port :join? false})
       ))
 
 (def race-date-format (DateTimeFormat/forPattern "yyyy-MM-dd"))
