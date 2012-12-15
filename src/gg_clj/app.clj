@@ -49,6 +49,21 @@
   [odds-diff]
   (partial filter #(> odds-diff (:odds-diff %))))
 
+(defn min-max-magic [races]
+  (def mns (map #(:magic-number (first (:finishes %))) races))
+  {:min (reduce #(if (< %2 %1) %2 %1) 100 mns)
+   :max (reduce #(if (> %2 %1) %2 %1) 0 mns)}
+  )
+
+(defn magic-number-stages [races]
+  (def min-max (min-max-magic races))
+  (def stage (/ (- (:max min-max) (:min min-max)) 6))
+  (loop [s (+ (:min min-max) stage)
+         t []]
+    (if (>= s (:max min-max))
+      t
+      (recur (+ s stage) (conj t s)))))
+
 (defn race-day-results
   "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number) and optional odds difference function used to calculate the odds difference "
   ([races-f finish-f] (race-day-results races-f finish-f (core/magic-number-f 1 1 1 0)))
@@ -105,18 +120,40 @@
 (defn lay-bets-page
   ([magic-number-f form-f] (lay-bets-page magic-number-f form-f core/second-odds-difference))
   ([magic-number-f form-f odds-diff-f]
-     (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                  {:title "New Lay Bets" :value (running-total (race-day-lay-results
-                                                                (finishing-positions (first-race-only))
-                                                                magic-number-f
-                                                                odds-diff-f)
-                                                               running-lay-total)}
-                  {:title "Everything Under -5" :value (running-total (race-day-lay-results
-                                                                       (finishing-positions (below-magic-number-of -5))
+
+     ;; (prn (map #(hash-map :title (str "Everything under " %)
+     ;;                    :value (running-total (race-day-lay-results
+     ;;                                           (finishing-positions (below-magic-number-of %))
+     ;;                                           magic-number-f
+     ;;                                           odds-diff-f)
+     ;;                                          running-lay-total))
+     ;;                         (magic-number-stages (race-day-lay-results
+     ;;                                               (finishing-positions (first-race-only))
+     ;;                                               magic-number-f
+     ;;                                               odds-diff-f))))
+     
+     (page/index (apply conj  [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+                         {:title "New Lay Bets" :value (running-total (race-day-lay-results
+                                                                       (finishing-positions (first-race-only))
                                                                        magic-number-f
                                                                        odds-diff-f)
-                                                                      running-lay-total)}
-                  ]
+                                                                      running-lay-total)}]
+                        (map #(hash-map :title (str "All bets under " (format "%.2f" %))
+                                        :value (running-total (race-day-lay-results
+                                                               (finishing-positions (below-magic-number-of %))
+                                                               magic-number-f
+                                                               odds-diff-f)
+                                                              running-lay-total))
+                             (magic-number-stages (race-day-lay-results
+                                                   (finishing-positions (first-race-only))
+                                                   magic-number-f
+                                                   odds-diff-f))))
+                 ;; {:title "Everything Under -5" :value (running-total (race-day-lay-results
+                 ;;                                                      (finishing-positions (below-magic-number-of -5))
+                 ;;                                                      magic-number-f
+                 ;;                                                      odds-diff-f)
+                 ;;                                                     running-lay-total)}
+                 
                  [page/link-back page/link-index]
                  form-f)))
 

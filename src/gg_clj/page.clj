@@ -98,6 +98,7 @@
   "HTML for betting page"
   ([running-totals links] (index running-totals links nil))
   ([running-totals links form-f]
+     (prn "running totals: " (count  running-totals))
      (html [:html
             (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                    [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
