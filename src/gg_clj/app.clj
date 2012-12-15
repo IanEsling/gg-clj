@@ -61,11 +61,12 @@
           :finishes finishes}))))
 
 (defn race-day-lay-results
-  "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number)"
+  "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number) and a function to calculate the odds difference used on each race (defaults to the second favourite - favourite)"
   ([] (race-day-lay-results (finishing-positions (first-race-only))))
   ([finish-f] (race-day-lay-results finish-f (core/magic-number-f 1 1 1 0)))
   ([finish-f magic-number-f] (race-day-lay-results finish-f magic-number-f core/second-odds-difference))
-  ([finish-f magic-number-f odds-diff-f] (race-day-results core/calculate-lay-bet-races finish-f magic-number-f odds-diff-f)))
+  ([finish-f magic-number-f odds-diff-f]
+     (race-day-results core/calculate-lay-bet-races finish-f magic-number-f odds-diff-f)))
 
 (defn race-day-back-results
   "take all the back bets for all race days from race-day-results with a function that determines which finishes we're interested in.  Defaults to just betting on the first race (the highest magic number)"
@@ -129,26 +130,16 @@
                    nil))
   (GET "/lay"
        []
-       (lay-bets-page (core/magic-number-f 1 1 1 0) page/form)
-       ;; (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-       ;;              {:title "New Lay Bets" :value (running-total (race-day-lay-results
-       ;;                                                            (finishing-positions (first-race-only))
-       ;;                                                            (core/magic-number-f 1 5 1.5 0.25)
-       ;;                                                            core/third-odds-difference)
-       ;;                                                           running-lay-total)}
-       ;;              {:title "Everything Under -5" :value (running-total (race-day-lay-results
-       ;;                                                                   (finishing-positions (below-magic-number-of -5))
-       ;;                                                                   (core/magic-number-f 1 5 1.5 0.25)
-       ;;                                                                   core/third-odds-difference)
-       ;;                                                                  running-lay-total)}
-       ;;              ]
-       ;;             [page/link-back page/link-index]
-       )
+       (lay-bets-page (core/magic-number-f 1 1 1 0) page/form))
 
   (POST "/lay"
         [odds-diff tips runners other-tips odds-diff-calc]
         (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc})
-        (lay-bets-page (core/magic-number-f form-params) (partial page/form form-params) (if (= "second" odds-diff-calc) core/second-odds-difference core/third-odds-difference)))
+        (lay-bets-page (core/magic-number-f form-params)
+                       (partial page/form form-params)
+                       (if (= "second" odds-diff-calc)
+                         core/second-odds-difference
+                         core/third-odds-difference)))
 
   (GET "/back"
        []
@@ -157,11 +148,6 @@
                                                                    (finishing-positions (first-race-only))
                                                                    (core/magic-number-f 1 5 1.5 0.25))
                                                                   running-back-total)}
-                    ;; {:title "Everything Over 5" :value (running-total (race-day-back-results
-                    ;;                                                      (finishing-positions (below-magic-number-of -5))
-                    ;;                                                      core/new-magic-number
-                    ;;                                                      core/third-odds-difference)
-                    ;;                                                     running-back-total)}
                     ]
                    [page/link-lay page/link-index]
                    nil))

@@ -67,7 +67,7 @@
                                )))))
 
 (defn form
-  ([] (form 1 1 1 1))
+  ([] (form 1 1 1 0))
   ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map)))
   ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips "second"))
   ([odds-diff tips runners other-tips odds-diff-calc]

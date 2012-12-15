@@ -126,10 +126,10 @@
 
 (defn calculate-back-bet-race
   "calculate all the bits needed for back betting on a race"
-  ([race] (calculate-back-bet-race race magic-number))
-  ([race magic-num-f]
+  ([race] (calculate-back-bet-race race magic-number second-odds-difference))
+  ([race magic-num-f odds-diff-f]
      (-> (add-has-horses race)
-         (if-has-horses second-odds-difference)
+         (if-has-horses odds-diff-f)
          (if-has-horses remove-non-favourites)
          (if-has-horses (partial add-magic-number magic-num-f))
          (if-has-horses get-highest-magic-number))))
@@ -150,9 +150,9 @@
 
 (defn calculate-back-bet-races
   "get bettable calculated races in a sensible order"
-  ([races] (calculate-back-bet-races races magic-number))
-  ([races magic-number-f]
+  ([races] (calculate-back-bet-races races magic-number second-odds-difference))
+  ([races magic-number-f odds-diff-f]
      (sort-by :highest-magic-number highest-magic-number-comparator
               (filter #(:has-horses %)
                       (for [race races]
-                        (calculate-back-bet-race race magic-number-f))))))
+                        (calculate-back-bet-race race magic-number-f odds-diff-f))))))
