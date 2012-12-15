@@ -68,7 +68,9 @@
 
 (defn form
   ([] (form 1 1 1 1))
-  ([odds-diff tips runners other-tips]
+  ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map)))
+  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips "second"))
+  ([odds-diff tips runners other-tips odds-diff-calc]
      (form-to [:post "/lay"]
               "Magic number for favourite in new lay bets:"
               [:br]              
@@ -83,6 +85,12 @@
               [:br]
               (text-field {:size 5 :maxlength 6} "other-tips" other-tips)
               (label "other-tips" " x number of tips on other horses ")
+              [:br]
+              (label "odds-diff-calc-second" "Use Second Favourite for Odds Difference")
+              (radio-button "odds-diff-calc" (= "second" odds-diff-calc) "second")
+              [:br]
+              (label "odds-diff-calc-third" "Use Third Favourite for Odds Difference")
+              (radio-button "odds-diff-calc" (= "third" odds-diff-calc) "third")
               [:br]
               (submit-button "Calculate" ))))
 

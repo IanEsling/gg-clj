@@ -37,7 +37,7 @@
 (defn finishing-positions
   "return a function that returns a list of finishing positions for a list of races based on composing the functions given."
   [& fs]
-    (finish-positions-for-races (apply comp fs)))
+  (finish-positions-for-races (apply comp fs)))
 
 (defn below-magic-number-of
   "function used in composing finishing position functions.  Filters out races with a magic number greater than that given."
@@ -55,7 +55,7 @@
   ([races-f finish-f magic-number-f] (race-day-results races-f finish-f magic-number-f core/second-odds-difference))
   ([races-f finish-f magic-number-f odds-diff-f]
      (for [race-day (db/race-days-with-results)]
-       (let [finishes (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f))]
+       (let [finishes (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f odds-diff-f))]
          {:race_date (.getTime (:race_date race-day))
           :finish (map :finish finishes)
           :finishes finishes}))))
@@ -86,8 +86,8 @@
 (defn running-back-total
   "adds the points total for back betting for the race day's finishes onto x"
   [x race-day]
-   (with-precision 5 (+ x (reduce (fn [tot finish]
-                                    (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M)))
+  (with-precision 5 (+ x (reduce (fn [tot finish]
+                                   (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M)))
                                  0M
                                  (:finish race-day)))))
 
@@ -101,21 +101,23 @@
     (swap! race-totals conj {:race_date (:race_date race-day) :total @total :finishes (:finishes race-day)}))
   @race-totals)
 
-(defn lay-bets-page [magic-number-f form-f]
-       (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                    {:title "New Lay Bets" :value (running-total (race-day-lay-results
-                                                                            (finishing-positions (first-race-only))
-                                                                            magic-number-f
-                                                                            core/third-odds-difference)
-                                                                 running-lay-total)}
-                    {:title "Everything Under -5" :value (running-total (race-day-lay-results
-                                                                         (finishing-positions (below-magic-number-of -5))
-                                                                         magic-number-f
-                                                                         core/third-odds-difference)
-                                                                        running-lay-total)}
-                    ]
-                   [page/link-back page/link-index]
-                   form-f))
+(defn lay-bets-page
+  ([magic-number-f form-f] (lay-bets-page magic-number-f form-f core/second-odds-difference))
+  ([magic-number-f form-f odds-diff-f]
+     (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+                  {:title "New Lay Bets" :value (running-total (race-day-lay-results
+                                                                (finishing-positions (first-race-only))
+                                                                magic-number-f
+                                                                odds-diff-f)
+                                                               running-lay-total)}
+                  {:title "Everything Under -5" :value (running-total (race-day-lay-results
+                                                                       (finishing-positions (below-magic-number-of -5))
+                                                                       magic-number-f
+                                                                       odds-diff-f)
+                                                                      running-lay-total)}
+                  ]
+                 [page/link-back page/link-index]
+                 form-f)))
 
 (defroutes routes
   "url routes for the web app to serve"
@@ -127,33 +129,34 @@
                    nil))
   (GET "/lay"
        []
-       (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                    {:title "New Lay Bets" :value (running-total (race-day-lay-results
-                                                                            (finishing-positions (first-race-only))
-                                                                            (core/magic-number-f 1 5 1.5 0.25)
-                                                                            core/third-odds-difference)
-                                                                 running-lay-total)}
-                    {:title "Everything Under -5" :value (running-total (race-day-lay-results
-                                                                         (finishing-positions (below-magic-number-of -5))
-                                                                         (core/magic-number-f 1 5 1.5 0.25)
-                                                                         core/third-odds-difference)
-                                                                        running-lay-total)}
-                    ]
-                   [page/link-back page/link-index]
-                   page/form))
-  
+       (lay-bets-page (core/magic-number-f 1 1 1 0) page/form)
+       ;; (page/index [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
+       ;;              {:title "New Lay Bets" :value (running-total (race-day-lay-results
+       ;;                                                            (finishing-positions (first-race-only))
+       ;;                                                            (core/magic-number-f 1 5 1.5 0.25)
+       ;;                                                            core/third-odds-difference)
+       ;;                                                           running-lay-total)}
+       ;;              {:title "Everything Under -5" :value (running-total (race-day-lay-results
+       ;;                                                                   (finishing-positions (below-magic-number-of -5))
+       ;;                                                                   (core/magic-number-f 1 5 1.5 0.25)
+       ;;                                                                   core/third-odds-difference)
+       ;;                                                                  running-lay-total)}
+       ;;              ]
+       ;;             [page/link-back page/link-index]
+       )
+
   (POST "/lay"
-        [odds-diff tips runners other-tips]
-        (lay-bets-page (core/magic-number-f (Double/valueOf odds-diff) (Double/valueOf tips) (Double/valueOf runners) (Double/valueOf other-tips))
-                       (partial page/form (Double/valueOf odds-diff) (Double/valueOf tips) (Double/valueOf runners) (Double/valueOf other-tips))))
-  
+        [odds-diff tips runners other-tips odds-diff-calc]
+        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc})
+        (lay-bets-page (core/magic-number-f form-params) (partial page/form form-params) (if (= "second" odds-diff-calc) core/second-odds-difference core/third-odds-difference)))
+
   (GET "/back"
        []
        (page/index [{:title "Original Back Bets" :value (running-total (race-day-back-results) running-back-total)}
                     {:title "New Back Bets" :value (running-total (race-day-back-results
-                                                                            (finishing-positions (first-race-only))
-                                                                            (core/magic-number-f 1 5 1.5 0.25))
-                                                                 running-back-total)}
+                                                                   (finishing-positions (first-race-only))
+                                                                   (core/magic-number-f 1 5 1.5 0.25))
+                                                                  running-back-total)}
                     ;; {:title "Everything Over 5" :value (running-total (race-day-back-results
                     ;;                                                      (finishing-positions (below-magic-number-of -5))
                     ;;                                                      core/new-magic-number
@@ -164,15 +167,18 @@
                    nil))
   (route/files "/" {:root "public"}))
 
-(def app (wrap-params routes))
+(defn app []
+  (-> routes
+      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      wrap-params))
 
 (defn start
   "start web app server up, defaults to 8080, 'wrap-reload' only works in development mode, need to comment out the ring reload lib as well"
   ([] (start 8080))
   ([port]
-     (ring/run-jetty (wrap-reload app '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page)) {:port port :join? false}) ;;Dev mode only
-;;      (ring/run-jetty #'routes {:port port :join? false})
-      ))
+     (ring/run-jetty (app) {:port port :join? false}) ;;Dev mode only
+     ;;      (ring/run-jetty #'routes {:port port :join? false})
+     ))
 
 (def race-date-format (DateTimeFormat/forPattern "yyyy-MM-dd"))
 
