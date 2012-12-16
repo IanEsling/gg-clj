@@ -9,7 +9,7 @@
   (:use clj-logging-config.log4j)
   (:use [compojure.core :only [defroutes GET POST]])
   (:use [ring.middleware.params :only [wrap-params]])
-  (:use ring.middleware.reload) ;;Dev mode only
+;;  (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
@@ -180,15 +180,14 @@
 
 (defn app []
   (-> routes
-      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+;;Dev mode only      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start
   "start web app server up, defaults to 8080, 'wrap-reload' only works in development mode, need to comment out the ring reload lib as well"
   ([] (start 8080))
   ([port]
-     (ring/run-jetty (app) {:port port :join? false}) ;;Dev mode only
-     ;;      (ring/run-jetty #'routes {:port port :join? false})
+     (ring/run-jetty (app) {:port port :join? false})
      ))
 
 (def race-date-format (DateTimeFormat/forPattern "yyyy-MM-dd"))
