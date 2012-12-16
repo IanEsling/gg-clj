@@ -118,44 +118,32 @@
   @race-totals)
 
 (defn lay-bets-page
-  ([magic-number-f form-f] (lay-bets-page magic-number-f form-f core/second-odds-difference))
-  ([magic-number-f form-f odds-diff-f]
-
-     ;; (prn (map #(hash-map :title (str "Everything under " %)
-     ;;                    :value (running-total (race-day-lay-results
-     ;;                                           (finishing-positions (below-magic-number-of %))
-     ;;                                           magic-number-f
-     ;;                                           odds-diff-f)
-     ;;                                          running-lay-total))
-     ;;                         (magic-number-stages (race-day-lay-results
-     ;;                                               (finishing-positions (first-race-only))
-     ;;                                               magic-number-f
-     ;;                                               odds-diff-f))))
-     
+  ([magic-number-f form-params] (lay-bets-page magic-number-f form-params core/second-odds-difference))
+  ([magic-number-f form-params odds-diff-f]
+     (def results (race-day-lay-results
+                   (finishing-positions (first-race-only))
+                   magic-number-f
+                   odds-diff-f))
      (page/index (apply conj  [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                         {:title "New Lay Bets" :value (running-total (race-day-lay-results
-                                                                       (finishing-positions (first-race-only))
-                                                                       magic-number-f
-                                                                       odds-diff-f)
-                                                                      running-lay-total)}]
-                        (map #(hash-map :title (str "All bets under " (format "%.2f" %))
+                               {:title "New Lay Bets" :value (running-total results running-lay-total)}
+                               (if-not (= "" (:all-under form-params))
+                                 {:title (str "All bets under " (:all-under form-params))
+                                  :value (running-total (race-day-lay-results
+                                                         (finishing-positions (below-magic-number-of (:all-under form-params)))
+                                                         magic-number-f
+                                                         odds-diff-f)
+                                                        running-lay-total)}
+                                 )
+                               ]
+                        (map #(hash-map :title (str "All bets under " (if (ratio? %) % (format "%.2f" %)))
                                         :value (running-total (race-day-lay-results
                                                                (finishing-positions (below-magic-number-of %))
                                                                magic-number-f
                                                                odds-diff-f)
                                                               running-lay-total))
-                             (magic-number-stages (race-day-lay-results
-                                                   (finishing-positions (first-race-only))
-                                                   magic-number-f
-                                                   odds-diff-f))))
-                 ;; {:title "Everything Under -5" :value (running-total (race-day-lay-results
-                 ;;                                                      (finishing-positions (below-magic-number-of -5))
-                 ;;                                                      magic-number-f
-                 ;;                                                      odds-diff-f)
-                 ;;                                                     running-lay-total)}
-                 
+                             (magic-number-stages results)))
                  [page/link-back page/link-index]
-                 form-f)))
+                 (partial page/form form-params))))
 
 (defroutes routes
   "url routes for the web app to serve"
@@ -167,13 +155,13 @@
                    nil))
   (GET "/lay"
        []
-       (lay-bets-page (core/magic-number-f 1 1 1 0) page/form))
+       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc "second"}))
 
   (POST "/lay"
-        [odds-diff tips runners other-tips odds-diff-calc]
-        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc})
+        [odds-diff tips runners other-tips odds-diff-calc all-under]
+        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc :all-under (if (= "" all-under) "" (Double/valueOf all-under))})
         (lay-bets-page (core/magic-number-f form-params)
-                       (partial page/form form-params)
+                       form-params
                        (if (= "second" odds-diff-calc)
                          core/second-odds-difference
                          core/third-odds-difference)))

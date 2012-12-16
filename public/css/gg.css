@@ -42,5 +42,13 @@ div#links a:active {
 }
 
 div#form {
-    margin: 50px;
+    margin: 30px;
+}
+
+div#form p, label {
+    margin: 3px;
+}
+
+div#form h3 {
+    margin: 0px;
 }
