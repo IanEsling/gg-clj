@@ -67,11 +67,9 @@
 
 (defn race-day-results
   "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number) and optional odds difference function used to calculate the odds difference "
-  ([races-f finish-f] (race-day-results races-f finish-f (core/magic-number-f 1 1 1 0)))
-  ([races-f finish-f magic-number-f] (race-day-results races-f finish-f magic-number-f core/second-odds-difference))
-  ([races-f finish-f magic-number-f odds-diff-f]
+  ([finish-f races-f]      
      (for [race-day (db/race-days-with-results)]
-       (let [finishes (finish-f (races-f (:races (db/get-race-day (:race_date race-day))) magic-number-f odds-diff-f))]
+       (let [finishes (finish-f (races-f (:races (db/get-race-day (:race_date race-day)))))]
          {:race_date (.getTime (:race_date race-day))
           :finish (map :finish finishes)
           :finishes finishes}))))
@@ -82,14 +80,14 @@
   ([finish-f] (race-day-lay-results finish-f (core/magic-number-f 1 1 1 0)))
   ([finish-f magic-number-f] (race-day-lay-results finish-f magic-number-f core/second-odds-difference))
   ([finish-f magic-number-f odds-diff-f]
-     (race-day-results core/calculate-lay-bet-races finish-f magic-number-f odds-diff-f)))
+     (race-day-results finish-f (partial core/calculate-lay-bet-races magic-number-f odds-diff-f))))
 
 (defn race-day-back-results
   "take all the back bets for all race days from race-day-results with a function that determines which finishes we're interested in.  Defaults to just betting on the first race (the highest magic number)"
   ([] (race-day-back-results (finishing-positions (first-race-only))))
   ([finish-f] (race-day-back-results finish-f (core/magic-number-f 1 1 1 0)))
   ([finish-f magic-number-f]
-     (race-day-results core/calculate-back-bet-races finish-f magic-number-f)))
+     (race-day-results finish-f (partial core/calculate-back-bet-races magic-number-f core/second-odds-difference))))
 
 (defn running-lay-total
   "adds the points total for lay betting for the race day's finishes onto x"
@@ -158,7 +156,7 @@
                    nil))
   (GET "/lay"
        []
-       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc "second"}))
+       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc "second" :all-under ""}))
 
   (POST "/lay"
         [odds-diff tips runners other-tips odds-diff-calc all-under]
