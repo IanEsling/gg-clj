@@ -9,7 +9,7 @@
   (:use clj-logging-config.log4j)
   (:use [compojure.core :only [defroutes GET POST]])
   (:use [ring.middleware.params :only [wrap-params]])
-;;  (:use ring.middleware.reload) ;;Dev mode only
+ (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
@@ -42,6 +42,7 @@
 (defn below-magic-number-of
   "function used in composing finishing position functions.  Filters out races with a magic number greater than that given."
   [magic-number]
+  (if (nil? magic-number) (prn "NIL MAGIC NUMBER!"))
   (partial filter #(< (:lowest-magic-number %) magic-number)))
 
 (defn odds-difference-less-than
@@ -93,7 +94,7 @@
 (defn running-lay-total
   "adds the points total for lay betting for the race day's finishes onto x"
   [x race-day]
-  (prn (:finish race-day))
+;;  (prn "lay finish: " race-day)
   (with-precision 5 (+ x (reduce (fn [tot finish]
                                    (+ tot (if (nil? finish) 0  (if (not= 1M (BigDecimal. finish)) 0.95M -2.0M))))
                                  0M
@@ -102,6 +103,7 @@
 (defn running-back-total
   "adds the points total for back betting for the race day's finishes onto x"
   [x race-day]
+  (prn "back finish: " (:finish race-day))
   (with-precision 5 (+ x (reduce (fn [tot finish]
                                    (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M)))
                                  0M
@@ -124,6 +126,7 @@
                    (finishing-positions (first-race-only))
                    magic-number-f
                    odds-diff-f))
+     (prn "new lay bets: " (running-total results running-lay-total))
      (page/index (apply conj  [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
                                {:title "New Lay Bets" :value (running-total results running-lay-total)}
                                (if-not (= "" (:all-under form-params))
@@ -180,7 +183,7 @@
 
 (defn app []
   (-> routes
-;;Dev mode only      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start

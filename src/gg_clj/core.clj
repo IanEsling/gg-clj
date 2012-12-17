@@ -85,7 +85,7 @@
 (defn magic-number-f
   ([map] (magic-number-f (:odds-diff map) (:tips map) (:runners map) (:other-tips map)))
   ([odds-diff tips number-of-runners other-tips]
-      (fn [horse race]
+     (fn [horse race]
         (-
          (-
           (+ (* odds-diff (:odds-diff race)) (* tips (:tips horse)))
