@@ -9,7 +9,7 @@
   (:use clj-logging-config.log4j)
   (:use [compojure.core :only [defroutes GET POST]])
   (:use [ring.middleware.params :only [wrap-params]])
-;; (:use ring.middleware.reload) ;;Dev mode only
+ (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:require [ring.adapter.jetty :as ring])
@@ -126,15 +126,7 @@
                    odds-diff-f))
      (prn "new lay bets: " (running-total results running-lay-total))
      (page/index (apply conj  [{:title "Original Lay Bets" :value (running-total (race-day-lay-results) running-lay-total)}
-                               {:title "New Lay Bets" :value (running-total results running-lay-total)}
-                               (if-not (= "" (:all-under form-params))
-                                 {:title (str "All bets under " (:all-under form-params))
-                                  :value (running-total (race-day-lay-results
-                                                         (finishing-positions (below-magic-number-of (:all-under form-params)))
-                                                         magic-number-f
-                                                         odds-diff-f)
-                                                        running-lay-total)}
-                                 )
+                               {:title "New Lay Bets" :value (running-total results running-lay-total)}                               
                                ]
                         (map #(hash-map :title (str "All bets under " (if (ratio? %) % (format "%.2f" %)))
                                         :value (running-total (race-day-lay-results
@@ -142,7 +134,9 @@
                                                                magic-number-f
                                                                odds-diff-f)
                                                               running-lay-total))
-                             (magic-number-stages results)))
+                             (if-not (= "" (:all-under form-params))
+                               (conj (magic-number-stages results) (:all-under form-params))
+                               (magic-number-stages results)))
                  [page/link-back page/link-index]
                  (partial page/form form-params))))
 
@@ -181,7 +175,7 @@
 
 (defn app []
   (-> routes
-;;      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start
