@@ -9,7 +9,7 @@
   (:use clj-logging-config.log4j)
   (:use [compojure.core :only [defroutes GET POST]])
   (:use [ring.middleware.params :only [wrap-params]])
-;;  (:use ring.middleware.reload) ;;Dev mode only
+  (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:import [java.util.concurrent Executors])
@@ -65,6 +65,11 @@
       t
       (recur (+ s stage) (conj t s)))))
 
+(defn get-race-days []
+  (doall (for [race-day (db/race-days-with-results)]
+           {:race-date (:race_date race-day) :races (:races (db/get-race-day (:race_date race-day)))})
+         ))
+
 (defn race-day-results
   "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number) and optional odds difference function used to calculate the odds difference "
   ([race-days finish-f races-f]
@@ -76,6 +81,7 @@
 
 (defn race-day-lay-results
   "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number) and a function to calculate the odds difference used on each race (defaults to the second favourite - favourite)"
+  ([] (race-day-lay-results (get-race-days) (finishing-positions (first-race-only))))
   ([race-days] (race-day-lay-results race-days (finishing-positions (first-race-only))))
   ([race-days finish-f] (race-day-lay-results race-days finish-f (core/magic-number-f 1 1 1 0)))
   ([race-days finish-f magic-number-f] (race-day-lay-results race-days finish-f magic-number-f core/second-odds-difference))
@@ -84,10 +90,10 @@
 
 (defn race-day-back-results
   "take all the back bets for all race days from race-day-results with a function that determines which finishes we're interested in.  Defaults to just betting on the first race (the highest magic number)"
-  ([] (race-day-back-results (finishing-positions (first-race-only))))
-  ([finish-f] (race-day-back-results finish-f (core/magic-number-f 1 1 1 0)))
-  ([finish-f magic-number-f]
-     (race-day-results finish-f (partial core/calculate-back-bet-races magic-number-f core/second-odds-difference))))
+  ([] (race-day-back-results (get-race-days) (finishing-positions (first-race-only))))
+  ([race-days finish-f] (race-day-back-results race-days finish-f (core/magic-number-f 1 1 1 0)))
+  ([race-days finish-f magic-number-f]
+     (race-day-results race-days finish-f (partial core/calculate-back-bet-races magic-number-f core/second-odds-difference))))
 
 (defn running-lay-total
   "adds the points total for lay betting for the race day's finishes onto x"
@@ -119,10 +125,8 @@
 (defn lay-bets-page
   ([magic-number-f form-params] (lay-bets-page magic-number-f form-params core/second-odds-difference))
   ([magic-number-f form-params odds-diff-f]
-     (def race-days (doall (for [race-day (db/race-days-with-results)]
-                             {:race-date (:race_date race-day) :races (:races (db/get-race-day (:race_date race-day)))})
-                           ))
-     (prn (count  race-days))
+     (def race-days (get-race-days))
+
      (def results (race-day-lay-results race-days
                    (finishing-positions (first-race-only))
                    magic-number-f
@@ -182,6 +186,7 @@
        []
        (page/index [{:title "Original Back Bets" :value (running-total (race-day-back-results) running-back-total)}
                     {:title "New Back Bets" :value (running-total (race-day-back-results
+                                                                   (get-race-days)
                                                                    (finishing-positions (first-race-only))
                                                                    (core/magic-number-f 1 5 1.5 0.25))
                                                                   running-back-total)}
@@ -192,7 +197,7 @@
 
 (defn app []
   (-> routes
-;;      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start
