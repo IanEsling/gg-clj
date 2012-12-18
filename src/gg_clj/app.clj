@@ -171,11 +171,12 @@
                    nil))
   (GET "/lay"
        []
-       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc "second" :all-under ""}))
+       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc "second" :all-under "" :bet-odds-under 0}))
 
   (POST "/lay"
-        [odds-diff tips runners other-tips odds-diff-calc all-under]
-        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc :all-under (if (= "" all-under) "" (Double/valueOf all-under))})
+        [odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under]
+        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc :all-under (if (= "" all-under) "" (Double/valueOf all-under))
+                          :bet-odds-under (Double/valueOf bet-odds-under)})
         (lay-bets-page (core/magic-number-f form-params)
                        form-params
                        (if (= "second" odds-diff-calc)

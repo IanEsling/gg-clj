@@ -9,8 +9,11 @@ div#links {
     padding: 10px;
 }
 
-div#links li {
+li {
     list-style-type: none;
+}
+
+div#links li {
     display: inline;
 }
 
@@ -51,4 +54,8 @@ div#form p, label {
 
 div#form h3 {
     margin: 0px;
+}
+
+div#formula li {
+    margin: 10px;
 }

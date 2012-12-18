@@ -68,41 +68,48 @@
 
 (defn form
   ([] (form 1 1 1 0))
-  ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map) (:all-under map)))
-  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips "second" ""))
-  ([odds-diff tips runners other-tips odds-diff-calc all-under]
+  ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map) (:all-under map) (:bet-odds-under map)))
+  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips "second" "" 0))
+  ([odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under]
      (form-to [:post "/lay"]
               [:h3 "New magic number calculation:"]
-              [:br]
-              [:p
-               (label "odds-diff-calc-second" "Use Second Favourite for Odds Difference")
-               (radio-button "odds-diff-calc" (= "second" odds-diff-calc) "second")
-               [:br]
-               (label "odds-diff-calc-third" "Use Third Favourite for Odds Difference")
-               (radio-button "odds-diff-calc" (= "third" odds-diff-calc) "third")]
-              [:br]
+
+              [:ul
+               [:li
+                (label "odds-diff-calc-second" "Use Second Favourite for Odds Difference")
+                (radio-button "odds-diff-calc" (= "second" odds-diff-calc) "second")
+                [:br]
+                (label "odds-diff-calc-third" "Use Third Favourite for Odds Difference")
+                (radio-button "odds-diff-calc" (= "third" odds-diff-calc) "third")]]
+
               [:div {:id "formula"}
-               [:strong "("]
-               (text-field {:size 5 :maxlength 6} "odds-diff" odds-diff)
-               [:strong " x "]
-               (label "odds-diff" " odds difference ")
-               [:strong " + "]
-               (text-field {:size 5 :maxlength 6} "tips" tips)
-               [:strong " x "]
-               (label "tips" " number of tips on favourite ")
-               [:strong ") - "]
-               (text-field {:size 5 :maxlength 6} "runners" runners)
-               [:strong " x "]
-               (label "runners" " Number of Runners ")
-               [:strong " - "]
-               (text-field {:size 5 :maxlength 6} "other-tips" other-tips)
-               [:strong " x "]
-               (label "other-tips" " number of tips on other horses ")
-               [:br]
-               (label "all-under" "Bet on everything with a magic number below: ")
-               (text-field {:size 5 :maxlength 5} "all-under" all-under)
-               ]
-              [:br]
+               [:ul
+                [:li
+                 [:strong "("]
+                 (text-field {:size 5 :maxlength 6} "odds-diff" odds-diff)
+                 [:strong " x "]
+                 (label "odds-diff" " odds difference ")
+                 [:strong " + "]
+                 (text-field {:size 5 :maxlength 6} "tips" tips)
+                 [:strong " x "]
+                 (label "tips" " number of tips on favourite ")
+                 [:strong ") - "]
+                 (text-field {:size 5 :maxlength 6} "runners" runners)
+                 [:strong " x "]
+                 (label "runners" " Number of Runners ")
+                 [:strong " - "]
+                 (text-field {:size 5 :maxlength 6} "other-tips" other-tips)
+                 [:strong " x "]
+                 (label "other-tips" " number of tips on other horses ")]
+                [:li
+                 (label "all-under" "Bet on everything with a magic number below: ")
+                 (text-field {:size 5 :maxlength 5} "all-under" all-under)
+                 " (leave empty to not bother)"]
+                [:li
+                 (label "bet-odds-under" "Only bet on odds difference less than: ")
+                 (text-field {:size 5 :maxlength 5} "bet-odds-under" bet-odds-under)
+                 " (zero to ignore)"]]]
+              
               (submit-button "Calculate" ))))
 
 (defn index
