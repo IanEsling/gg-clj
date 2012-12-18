@@ -8,7 +8,7 @@
 
 (set-logger! :level :info 
     	     :additivity false
-        	 :pattern "%p - %m%n") 
+        	 :pattern "%r %p - %m%n") 
 
 ;;setup database, assume if we don't have a 'DATABASE_URL' available
 ;;then we're not running on Heroku and look for a local one (called 'gg')

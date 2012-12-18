@@ -45,7 +45,7 @@
                          (str "{y : " (:total result)
                               ", finishes : [" (subs-miss-end (finishes result))
                               "]},"))))
-  (prn "chart data:" data)
+;;  (prn "chart data:" data)
   (subs-miss-end data))
 
 (defn chart-series
@@ -109,7 +109,7 @@
   "HTML for betting page"
   ([running-totals links] (index running-totals links nil))
   ([running-totals links form-f]
-     (prn "running totals: " (count  running-totals))
+;;     (prn "running totals: " (count  running-totals))
      (html [:html
             (html [:head [:link {:href "/css/gg.css" :media "screen" :rel "stylesheet" :type "text/css"}]
                    [:script {:type "text/javascript" :src "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"}]
