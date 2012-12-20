@@ -33,7 +33,6 @@
   "gets earliest race date in millis"
   [race-day-results]
   (reduce (fn [t n]
-            (prn t n)
             (if (< t n) t n)) (.getTime (java.util.Date.))
             (map :race_date race-day-results)))
 
@@ -85,6 +84,10 @@
               [:div {:id "formula"}
                [:ul
                 [:li
+                 (label "bet-odds-under" "Only bet on odds difference less than: ")
+                 (text-field {:size 5 :maxlength 5} "bet-odds-under" bet-odds-under)
+                 " (zero to ignore)"]
+                [:li
                  [:strong "("]
                  (text-field {:size 5 :maxlength 6} "odds-diff" odds-diff)
                  [:strong " x "]
@@ -105,10 +108,7 @@
                  (label "all-under" "Bet on everything with a magic number below: ")
                  (text-field {:size 5 :maxlength 5} "all-under" all-under)
                  " (leave empty to not bother)"]
-                [:li
-                 (label "bet-odds-under" "Only bet on odds difference less than: ")
-                 (text-field {:size 5 :maxlength 5} "bet-odds-under" bet-odds-under)
-                 " (zero to ignore)"]]]
+                ]]
               
               (submit-button "Calculate" ))))
 
