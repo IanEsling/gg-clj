@@ -68,21 +68,17 @@
 (defn form
   ([] (form 1 1 1 0))
   ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map) (:all-under map) (:bet-odds-under map)))
-  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips "second" "" 0))
+  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips 1 "" 0))
   ([odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under]
      (form-to [:post "/lay"]
               [:h3 "New magic number calculation:"]
 
-              [:ul
-               [:li
-                (label "odds-diff-calc-second" "Use Second Favourite for Odds Difference")
-                (radio-button "odds-diff-calc" (= "second" odds-diff-calc) "second")
-                [:br]
-                (label "odds-diff-calc-third" "Use Third Favourite for Odds Difference")
-                (radio-button "odds-diff-calc" (= "third" odds-diff-calc) "third")]]
-
               [:div {:id "formula"}
                [:ul
+                [:li
+                (label "odds-diff-calc-second" "Use 1 - ")
+                 (text-field {:size 5 :maxlength 5} "odds-diff-calc" (+ 1 odds-diff-calc))
+                 " favourite for odds difference"]
                 [:li
                  (label "bet-odds-under" "Only bet on odds difference less than: ")
                  (text-field {:size 5 :maxlength 5} "bet-odds-under" bet-odds-under)

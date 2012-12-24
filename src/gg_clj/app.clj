@@ -9,7 +9,7 @@
   (:use clj-logging-config.log4j)
   (:use [compojure.core :only [defroutes GET POST]])
   (:use [ring.middleware.params :only [wrap-params]])
-;;  (:use ring.middleware.reload) ;;Dev mode only
+  (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:import [java.util.concurrent Executors])
@@ -89,7 +89,7 @@
   ([] (race-day-lay-results (get-race-days) (finishing-positions (first-race-only))))
   ([race-days] (race-day-lay-results race-days (finishing-positions (first-race-only))))
   ([race-days finish-f] (race-day-lay-results race-days finish-f (core/magic-number-f 1 1 1 0)))
-  ([race-days finish-f magic-number-f] (race-day-lay-results race-days finish-f magic-number-f core/second-odds-difference))
+  ([race-days finish-f magic-number-f] (race-day-lay-results race-days finish-f magic-number-f (core/odds-difference-f 1)))
   ([race-days finish-f magic-number-f odds-diff-f]
      (race-day-results race-days finish-f (partial core/calculate-lay-bet-races magic-number-f odds-diff-f))))
 
@@ -98,7 +98,7 @@
   ([] (race-day-back-results (get-race-days) (finishing-positions (first-race-only))))
   ([race-days finish-f] (race-day-back-results race-days finish-f (core/magic-number-f 1 1 1 0)))
   ([race-days finish-f magic-number-f]
-     (race-day-results race-days finish-f (partial core/calculate-back-bet-races magic-number-f core/second-odds-difference))))
+     (race-day-results race-days finish-f (partial core/calculate-back-bet-races magic-number-f (core/odds-difference-f 1)))))
 
 (defn running-lay-total
   "adds the points total for lay betting for the race day's finishes onto x"
@@ -128,7 +128,7 @@
      @race-totals))
 
 (defn lay-bets-page
-  ([magic-number-f form-params] (lay-bets-page magic-number-f form-params core/second-odds-difference))
+  ([magic-number-f form-params] (lay-bets-page magic-number-f form-params (core/odds-difference-f (:odds-diff-calc form-params))))
   ([magic-number-f form-params odds-diff-f]
      (def race-days (get-race-days))
 
@@ -138,42 +138,42 @@
                                         odds-diff-f))
      (let [r (ref [])
            pool (Executors/newFixedThreadPool 20)
-           tasks (apply conj  [(fn []
-                                 (dosync (alter r conj [{:title "Original Lay Bets" :value (running-total (race-day-lay-results race-days) running-lay-total)}]))
-                                 )
-                               (fn []
-                                 (prn "bet odds under: " (:bet-odds-under form-params))
-                                 (dosync (alter r conj [{:title "New Lay Bets" :value (running-total (race-day-lay-results race-days
-                                                                                                                           (finishing-positions
-                                                                                                                            (first-race-only)
-                                                                                                                            (odds-difference-less-than (:bet-odds-under form-params))
-                                                                                                                            )
-                                                                                                                           magic-number-f
-                                                                                                                           odds-diff-f)  running-lay-total)}]))
-                                 )
-                               ]
-                        (map (fn [mn] (fn [] (dosync (alter r conj [(hash-map :title (str "All bets under " (if (ratio? mn) mn (format "%.2f" mn)))
-                                                                            :value (running-total (race-day-lay-results race-days
-                                                                                                                        (finishing-positions
-                                                                                                                         (below-magic-number-of mn)
-                                                                                                                         (odds-difference-less-than
-                                                                                                                         (:bet-odds-under
-                                                                                                                         form-params))
-                                                                                                                         )
-                                                                                                                        magic-number-f
-                                                                                                                        odds-diff-f)
-                                                                                                  running-lay-total))]))
-                                       ))
-                             (if-not (= "" (:all-under form-params))
-                               (conj (magic-number-stages results) (:all-under form-params))
-                               (magic-number-stages results))))]
-       (doseq [future (.invokeAll pool tasks)]
-         (.get future))
-       (.shutdown pool)
+           tasks [(fn []
+                    (dosync (alter r conj [{:title "Original Lay Bets" :value (running-total (race-day-lay-results race-days) running-lay-total)}]))
+                    )
+                  (fn []
+                    (prn "bet odds under: " (:bet-odds-under form-params))
+                    (dosync (alter r conj [{:title "New Lay Bets" :value (running-total (race-day-lay-results race-days
+                                                                                                              (finishing-positions
+                                                                                                               (first-race-only)
+                                                                                                               (odds-difference-less-than (:bet-odds-under form-params))
+                                                                                                               )
+                                                                                                              magic-number-f
+                                                                                                              odds-diff-f)  running-lay-total)}]))
+                    )
+                  ]]
+           ;; (map (fn [mn] (fn [] (dosync (alter r conj [(hash-map :title (str "All bets under " (if (ratio? mn) mn (format "%.2f" mn)))
+           ;;                                                     :value (running-total (race-day-lay-results race-days
+           ;;                                                                                                 (finishing-positions
+           ;;                                                                                                  (below-magic-number-of mn)
+           ;;                                                                                                  (odds-difference-less-than
+           ;;                                                                                                  (:bet-odds-under
+           ;;                                                                                                  form-params))
+           ;;                                                                                                  )
+           ;;                                                                                                 magic-number-f
+           ;;                                                                                                 odds-diff-f)
+           ;;                                                                           running-lay-total))]))
+           ;;                ))
+           ;;      (if-not (= "" (:all-under form-params))
+           ;;        (conj (magic-number-stages results) (:all-under form-params))
+           ;;        (magic-number-stages results))))]
+           (doseq [future (.invokeAll pool tasks)]
+             (.get future))
+           (.shutdown pool)
 
-       (page/index (flatten (deref r))
-                   [page/link-back page/link-index]
-                   (partial page/form form-params)))))
+           (page/index (flatten (deref r))
+                       [page/link-back page/link-index]
+                       (partial page/form form-params)))))
 
 (defroutes routes
   "url routes for the web app to serve"
@@ -185,18 +185,15 @@
                    nil))
   (GET "/lay"
        []
-       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc "second" :all-under "" :bet-odds-under 0}))
+       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc 1 :all-under "" :bet-odds-under 0}))
 
   (POST "/lay"
         [odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under]
-        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc odds-diff-calc :all-under (if (= "" all-under) "" (Double/valueOf all-under))
+        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc (- (Integer/valueOf odds-diff-calc) 1) :all-under (if (= "" all-under) "" (Double/valueOf all-under))
                           :bet-odds-under (Double/valueOf bet-odds-under)})
         (prn form-params)
         (lay-bets-page (core/magic-number-f form-params)
-                       form-params
-                       (if (= "second" odds-diff-calc)
-                         core/second-odds-difference
-                         core/third-odds-difference)))
+                       form-params))
 
   (GET "/back"
        []
@@ -213,7 +210,7 @@
 
 (defn app []
   (-> routes
-;;      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start

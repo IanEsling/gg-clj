@@ -50,22 +50,23 @@
   [race]
   (sort (map #(numeric-odds %) (map #(:odds %) (:horses race)))))
 
-(defn odds-difference [first-f second-f race]
-  (let [odds (sorted-odds race)]
-    (assoc race :odds-diff (- (second-f odds) (first-f odds))))
-  )
+(defn odds-difference-f [next-odds-pos]
+  (fn [race]
+    (let [odds (sorted-odds race)]
+      (try (nth odds next-odds-pos)
+           (catch Exception e
+             (prn next-odds-pos odds )))
+      
+      (assoc race :odds-diff (- (nth odds (if (>= next-odds-pos (count odds)) (- (count odds) 1)  next-odds-pos)) (first odds))))))
 
-(defn first-odds-difference [second-f race]
-  ((partial odds-difference first) second-f race)
-  )
+;; (defn first-odds-difference [next-odds-pos race]
+;;   ((partial odds-difference first) (partial nth race next-odds-pos) race))
 
-(defn second-odds-difference [race]
-  ((partial first-odds-difference second race))
-  )
+;; (defn second-odds-difference [race]
+;;   ((partial first-odds-difference 1 race)))
 
-(defn third-odds-difference [race]
-  ((partial first-odds-difference (comp second rest)  race))
-  )
+;; (defn third-odds-difference [race]
+;;   ((partial first-odds-difference 2 race)))
 
 (defn remove-non-favourites
   "remove any horses that don't have the favourite's odds (may have joint favourites in a race)"
@@ -116,7 +117,7 @@
 (defn calculate-lay-bet-race
   "calculate all the bits needed for lay betting on a race"
   ([race] (calculate-lay-bet-race race magic-number))
-  ([race magic-num-f] (calculate-lay-bet-race race magic-num-f second-odds-difference))
+  ([race magic-num-f] (calculate-lay-bet-race race magic-num-f (odds-difference-f 1)))
   ([race magic-num-f odds-diff-f]
      (-> (add-bettable race)
          (if-bettable odds-diff-f)
@@ -126,7 +127,7 @@
 
 (defn calculate-back-bet-race
   "calculate all the bits needed for back betting on a race"
-  ([race] (calculate-back-bet-race race magic-number second-odds-difference))
+  ([race] (calculate-back-bet-race race magic-number (odds-difference-f 1)))
   ([race magic-num-f odds-diff-f]
      (-> (add-has-horses race)
          (if-has-horses odds-diff-f)
@@ -141,7 +142,7 @@
 (defn calculate-lay-bet-races
   "get bettable calculated races in a sensible order"
   ([races] (calculate-lay-bet-races magic-number races))
-  ([magic-number-f races] (calculate-lay-bet-races magic-number second-odds-difference races))
+  ([magic-number-f races] (calculate-lay-bet-races magic-number (odds-difference-f 1) races))
   ([magic-number-f odds-diff-f races]
      (sort-by :lowest-magic-number lowest-magic-number-comparator
               (filter #(:bettable %)
@@ -150,7 +151,7 @@
 
 (defn calculate-back-bet-races
   "get bettable calculated races in a sensible order"
-  ([races] (calculate-back-bet-races magic-number second-odds-difference races))
+  ([races] (calculate-back-bet-races magic-number (odds-difference-f 1) races))
   ([magic-number-f odds-diff-f races]
      (sort-by :highest-magic-number highest-magic-number-comparator
               (filter #(:has-horses %)
