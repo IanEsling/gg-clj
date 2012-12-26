@@ -9,7 +9,7 @@
   (:use clj-logging-config.log4j)
   (:use [compojure.core :only [defroutes GET POST]])
   (:use [ring.middleware.params :only [wrap-params]])
-;;  (:use ring.middleware.reload) ;;Dev mode only
+  (:use ring.middleware.reload) ;;Dev mode only
   (:import [org.joda.time.format DateTimeFormat])
   (:import [org.joda.time LocalDate])
   (:import [java.util.concurrent Executors])
@@ -47,6 +47,17 @@
   [magic-number]
   (if (nil? magic-number) (prn "NIL MAGIC NUMBER!"))
   (partial filter #(< (:lowest-magic-number %) magic-number)))
+
+(defn tips-percentage-f [tips-percent]
+  (fn [race]
+    (let [tips (:tips (first (:horses race)))
+          other-tips (:other-tips (first (:horses race)))]
+      (> tips-percent (* 100 (/ tips (if (and (= 0 tips) (= 0 other-tips)) 1 (+ tips other-tips))))))))
+
+(defn tips-percent-less-than [tips-percent]
+  (if (< 0 tips-percent)
+    (partial filter (tips-percentage-f tips-percent))
+    (partial filter (tips-percentage-f 100))))
 
 (defn odds-difference-less-than
   "function used in composing finishing position functions.  Filters out races with an odds difference greater than that given."
@@ -112,7 +123,9 @@
   "adds the points total for back betting for the race day's finishes onto x"
   [x race-day]
   (with-precision 5 (+ x (reduce (fn [tot finish]
-                                   (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M)))
+                                   (try
+                                     (+ tot (if (not= 1M (BigDecimal. finish)) -1.0M 1.5M))
+                                     (catch Exception e (prn race-day))))
                                  0M
                                  (:finish race-day)))))
 
@@ -146,6 +159,7 @@
                     (dosync (alter r conj [{:title "New Lay Bets" :value (running-total (race-day-lay-results race-days
                                                                                                               (finishing-positions
                                                                                                                (first-race-only)
+                                                                                                               (tips-percent-less-than (:tips-percent form-params))
                                                                                                                (odds-difference-less-than (:bet-odds-under form-params))
                                                                                                                )
                                                                                                               magic-number-f
@@ -185,12 +199,14 @@
                    nil))
   (GET "/lay"
        []
-       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc 1 :all-under "" :bet-odds-under 0}))
+       (lay-bets-page (core/magic-number-f 1 1 1 0) {:odds-diff 1 :tips 1 :runners 1 :other-tips 0 :odds-diff-calc 1 :all-under "" :bet-odds-under 0 :tips-percent 0}))
 
   (POST "/lay"
-        [odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under]
-        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc (- (Integer/valueOf odds-diff-calc) 1) :all-under (if (= "" all-under) "" (Double/valueOf all-under))
-                          :bet-odds-under (Double/valueOf bet-odds-under)})
+        [odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under tips-percent]
+        (def form-params {:odds-diff (Double/valueOf odds-diff) :tips (Double/valueOf tips) :runners (Double/valueOf runners) :other-tips (Double/valueOf other-tips) :odds-diff-calc (- (Integer/valueOf odds-diff-calc) 1)
+                          ;;:all-under (if (= "" all-under) "" (Double/valueOf all-under))
+                          :bet-odds-under (Double/valueOf bet-odds-under)
+                          :tips-percent (Double/valueOf tips-percent)})
         (prn form-params)
         (lay-bets-page (core/magic-number-f form-params)
                        form-params))
@@ -210,7 +226,7 @@
 
 (defn app []
   (-> routes
-;;      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start

@@ -68,6 +68,14 @@
 ;; (defn third-odds-difference [race]
 ;;   ((partial first-odds-difference 2 race)))
 
+(defn tips-on-other-horses [horse-name race]
+  (reduce (fn [mn h] (if (= (:name h) horse-name) mn (+ mn (:tips h)))) 0 (:horses race)))
+
+(defn add-other-tips [race]
+  (assoc race :horses
+         (for [horse (:horses race)]
+           (assoc horse :other-tips (tips-on-other-horses (:name horse) race)))))
+
 (defn remove-non-favourites
   "remove any horses that don't have the favourite's odds (may have joint favourites in a race)"
   [race]
@@ -121,6 +129,7 @@
   ([race magic-num-f odds-diff-f]
      (-> (add-bettable race)
          (if-bettable odds-diff-f)
+         (if-bettable add-other-tips)         
          (if-bettable (partial add-magic-number magic-num-f))
          (if-bettable remove-non-favourites)
          (if-bettable get-lowest-magic-number))))
@@ -131,6 +140,7 @@
   ([race magic-num-f odds-diff-f]
      (-> (add-has-horses race)
          (if-has-horses odds-diff-f)
+         (if-has-horses add-other-tips)
          (if-has-horses remove-non-favourites)
          (if-has-horses (partial add-magic-number magic-num-f))
          (if-has-horses get-highest-magic-number))))

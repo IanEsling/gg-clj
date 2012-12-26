@@ -67,9 +67,9 @@
 
 (defn form
   ([] (form 1 1 1 0))
-  ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map) (:all-under map) (:bet-odds-under map)))
-  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips 1 "" 0))
-  ([odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under]
+  ([map] (form (:odds-diff map) (:tips map) (:runners map) (:other-tips map) (:odds-diff-calc map) (:all-under map) (:bet-odds-under map) (:tips-percent map)))
+  ([odds-diff tips runners other-tips] (form odds-diff tips runners other-tips 1 "" 0 0))
+  ([odds-diff tips runners other-tips odds-diff-calc all-under bet-odds-under tips-percent]
      (form-to [:post "/lay"]
               [:h3 "New magic number calculation:"]
 
@@ -101,9 +101,14 @@
                  [:strong " x "]
                  (label "other-tips" " number of tips on other horses ")]
                 [:li
-                 (label "all-under" "Bet on everything with a magic number below: ")
-                 (text-field {:size 5 :maxlength 5} "all-under" all-under)
-                 " (leave empty to not bother)"]
+                 (label "tips-percent" "Only bet where percentage of tips for favourite is less than")
+                 (text-field {:size 5 :maxlength 5} "tips-percent" tips-percent)
+                 "(zero to ignore)"
+                 ]
+                ;; [:li
+                ;;  (label "all-under" "Bet on everything with a magic number below: ")
+                ;;  (text-field {:size 5 :maxlength 5} "all-under" all-under)
+                ;;  " (leave empty to not bother)"]
                 ]]
               
               (submit-button "Calculate" ))))

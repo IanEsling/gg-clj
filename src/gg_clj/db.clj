@@ -103,7 +103,7 @@
   "get all the dates for which we have race days with results (i.e. horses with finishing position)"
   []
   (info "checking for race days with results...")
-  (exec-raw ["select rd.race_date from race_day rd, race r where rd.id = r.race_day_id and not exists (select 1 from horse h where r.id = h.race_id and h.finish is null) group by rd.id order by 1;"] :results))
+  (exec-raw ["select rd.race_date from race_day rd where not exists (select 1 from race r, horse h where r.race_day_id = rd.id and r.id = h.race_id and h.finish is null) group by rd.id order by 1;"] :results))
 
 (defn race-days-with-no-results
   "get all the dates for which we have race days with no results (i.e. horses with no finishing position)"
