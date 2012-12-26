@@ -1,6 +1,7 @@
 (defproject gg-clj "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
+  :jvm-opts ["-Xmx1g"] 
   :main gg-clj.app
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
