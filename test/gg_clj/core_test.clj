@@ -3,6 +3,15 @@
   (:use midje.sweet)
   )
 
+(defn first-odds-difference [next-odds-pos race]
+   ((partial core/odds-difference-f first) (partial nth race next-odds-pos) race))
+
+(defn second-odds-difference [race]
+   ((partial first-odds-difference 1 race)))
+
+(defn third-odds-difference [race]
+   ((partial first-odds-difference 2 race)))
+
 (def race {:venue "V" :time "12.34" :number_of_runners 4
                     :horses '({:name "h1" :odds "2/1" :tips 2}
                               {:name "h2" :odds "3/1" :tips 1})})
@@ -26,6 +35,7 @@
       )
 
 (fact "should have odds difference calculated"
-      (:odds-diff (third-odds-difference race2)) => 2
-      (:odds-diff (first-odds-difference second race)) => 1
+      (:odds-diff ((core/odds-difference-f 3) race2)) => 3
+      (:odds-diff ((core/odds-difference-f 2) race2)) => 2
+      (:odds-diff ((core/odds-difference-f 1) race)) => 1
       )
