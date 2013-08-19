@@ -16,8 +16,6 @@
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
 
-(def pool (Executors/newFixedThreadPool 30))
-
 (defn finish-positions-for-races
   "returns a function that returns a list of finishing positions for a list of races after it's been filtered by the given function"
   [f]
@@ -114,8 +112,11 @@
                     race-days)]
 
      (println (str  (count tasks) " tasks for race-day-results"))
+     (def pool (Executors/newFixedThreadPool 20))
+     
      (doseq [future (.invokeAll pool tasks)]
        (.get future))
+     (.shutdown pool)
 ;;     (println (deref results))
      (flatten (deref results))))
  ;; (for [race-day race-days]
@@ -234,7 +235,7 @@
      ;;(.shutdown pool)
 
      (println "lay bets page finished...")
-     (shutdown-agents)
+     ;;(shutdown-agents)
      ;;(println "original: " @original)
      ;;(println "new: " @new)
      (page/index [@original @new]
