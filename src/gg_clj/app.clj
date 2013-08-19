@@ -179,16 +179,18 @@
      (def race-days (get-race-days))
      (println "getting lay bets page...")
 
+     (def running-total-memo (memoize running-total))
+
      ;; (def results (race-day-lay-results race-days
      ;;                                    (finishing-positions (first-race-only))
      ;;                                    magic-number-f
      ;;                                    odds-diff-f))
 
      (def original (future {:title "Original Lay Bets"
-                            :value (running-total (race-day-lay-results race-days) running-lay-total)}))
+                            :value (running-total-memo (race-day-lay-results race-days) running-lay-total)}))
 
      (def new (future {:title "New Lay Bets"
-                       :value (running-total (race-day-lay-results race-days
+                       :value (running-total-memo (race-day-lay-results race-days
                                                                    (finishing-positions
                                                                     (first-race-only)
                                                                     (tips-percent-less-than (:tips-percent form-params))
