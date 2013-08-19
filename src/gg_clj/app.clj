@@ -16,7 +16,7 @@
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
 
-(def pool (Executors/newFixedThreadPool 300))
+(def pool (Executors/newFixedThreadPool 30))
 
 (defn finish-positions-for-races
   "returns a function that returns a list of finishing positions for a list of races after it's been filtered by the given function"
@@ -234,6 +234,7 @@
      ;;(.shutdown pool)
 
      (println "lay bets page finished...")
+     (shutdown-agents)
      ;;(println "original: " @original)
      ;;(println "new: " @new)
      (page/index [@original @new]
