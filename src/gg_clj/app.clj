@@ -16,7 +16,7 @@
   (:require [ring.adapter.jetty :as ring])
   (:require [compojure.route :as route]))
 
-(def pool (Executors/newFixedThreadPool 20))
+(def pool (Executors/newFixedThreadPool 300))
 
 (defn finish-positions-for-races
   "returns a function that returns a list of finishing positions for a list of races after it's been filtered by the given function"
@@ -71,33 +71,59 @@
 (defn min-max-magic [races]
   (def mns (map #(:magic-number (first (:finishes %))) races))
   {:min (reduce #(if (< %2 %1) %2 %1) 100 mns)
-   :max (reduce #(if (> %2 %1) %2 %1) 0 mns)}
-  )
+   :max (reduce #(if (> %2 %1) %2 %1) 0 mns)})
+  
 
-(defn magic-number-stages [races]
-  (def min-max (min-max-magic races))
-  (def stage (/ (- (:max min-max) (:min min-max)) 6))
-  (loop [s (+ (:min min-max) stage)
-         t []]
-    (if (>= s (:max min-max))
-      t
-      (recur (+ s stage) (conj t s)))))
+ (defn magic-number-stages [races]
+   (def min-max (min-max-magic races))
+   (def stage (/ (- (:max min-max) (:min min-max)) 6))
+   (loop [s (+ (:min min-max) stage)
+          t []]
+     (if (>= s (:max min-max))
+       t
+       (recur (+ s stage) (conj t s)))))
 
-(defn get-race-days []
-  (db/race-days-with-results))
-  ;; (for [race-day (db/race-days-with-results)]
-  ;;   {:race-date (:race_date race-day) :races (:races (db/get-race-day (:race_date race-day)))})
-  ;; )
+ (defn get-race-days []
+   (db/race-days-with-results))
+ ;; (for [race-day (db/race-days-with-results)]
+ ;;   {:race-date (:race_date race-day) :races (:races (db/get-race-day (:race_date race-day)))})
+ ;; )
+
+ ;; (defn race-day-results
+ ;;   "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number) and optional odds difference function used to calculate the odds difference "
+ ;;   ([race-days finish-f races-f]
+ ;;      (let [r (ref [])
+ ;;            tasks (map (fn [race-day] (fn []
+ ;;                                       (let [races (:races (db/get-race-day (:race_date race-day)))
+ ;;                                             finishes (finish-f (races-f races))]
+ ;;                                         (dosync alter r conj [{:race_date (.getTime (:race_date race-day))
+ ;;                                                                :finish (map :finish finishes)
+ ;;                                                                :finishes finishes}])))) race-days))))
+
 
 (defn race-day-results
-  "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number) and optional odds difference function used to calculate the odds difference "
-  ([race-days finish-f races-f]
-     (for [race-day race-days]
-       (let [races (:races (db/get-race-day (:race_date race-day)))
-             finishes (finish-f (races-f races))]
-         {:race_date (.getTime (:race_date race-day))
-          :finish (map :finish finishes)
-          :finishes finishes}))))
+   "returns results for every race day, races-f calculates the day's races (either back or lay betting) and finish-f determines which finishes we're interested in for that race day.  Optional magic number function that will be used to calculate each horse's magic number (defaults to core/magic-number) and optional odds difference function used to calculate the odds difference "
+   [race-days finish-f races-f]
+   (let [results (ref [])
+         tasks (map (fn [race-day] (fn []
+                                    (let [races (:races (db/get-race-day (:race_date race-day)))
+                                          finishes (finish-f (races-f races))]
+                                      (dosync (alter results conj [{:race_date (.getTime (:race_date race-day))
+                                                               :finish (map :finish finishes)
+                                                               :finishes finishes}])))))
+                    race-days)]
+
+     (println (str  (count tasks) " tasks for race-day-results"))
+     (doseq [future (.invokeAll pool tasks)]
+       (.get future))
+;;     (println (deref results))
+     (flatten (deref results))))
+ ;; (for [race-day race-days]
+ ;;   (let [races (:races (db/get-race-day (:race_date race-day)))
+ ;;         finishes (finish-f (races-f races))]
+ ;;     {:race_date (.getTime (:race_date race-day))
+ ;;      :finish (map :finish finishes)
+ ;;      :finishes finishes}))])))
 
 (defn race-day-lay-results
   "take all the lay bets for all the race days from race-day-results with a function that determines which finishes we're interested in (defaults to first race only i.e. lowest magic number) and a function that's used to calculate the magic number for each horse (defaults to core/magic-number) and a function to calculate the odds difference used on each race (defaults to the second favourite - favourite)"
@@ -106,6 +132,7 @@
   ([race-days finish-f] (race-day-lay-results race-days finish-f (core/magic-number-f 1 1 1 0)))
   ([race-days finish-f magic-number-f] (race-day-lay-results race-days finish-f magic-number-f (core/odds-difference-f 1)))
   ([race-days finish-f magic-number-f odds-diff-f]
+     (println "getting lay results...")
      (race-day-results race-days finish-f (partial core/calculate-lay-bet-races magic-number-f odds-diff-f))))
 
 (defn race-day-back-results
@@ -113,6 +140,7 @@
   ([] (race-day-back-results (get-race-days) (finishing-positions (first-race-only))))
   ([race-days finish-f] (race-day-back-results race-days finish-f (core/magic-number-f 1 1 1 0)))
   ([race-days finish-f magic-number-f]
+     (println "getting back results...")
      (race-day-results race-days finish-f (partial core/calculate-back-bet-races magic-number-f (core/odds-difference-f 1)))))
 
 (defn running-lay-total
@@ -138,8 +166,8 @@
   ([race-days running-f] (running-total race-days running-f (atom 0M) (atom [])))
   ([race-days running-f total race-totals]
      ;;     (def total (atom 0M))
-     ;;     (def race-totals (atom []))
-     (doseq [race-day race-days]
+     ;;     (def race-totals (atom []))     
+     (doseq [race-day (sort-by :race_date race-days)]
        (swap! total running-f race-day)
        (swap! race-totals conj {:race_date (:race_date race-day) :total @total :finishes (:finishes race-day)}))
      @race-totals))
@@ -148,28 +176,43 @@
   ([magic-number-f form-params] (lay-bets-page magic-number-f form-params (core/odds-difference-f (:odds-diff-calc form-params))))
   ([magic-number-f form-params odds-diff-f]
      (def race-days (get-race-days))
+     (println "getting lay bets page...")
 
      ;; (def results (race-day-lay-results race-days
      ;;                                    (finishing-positions (first-race-only))
      ;;                                    magic-number-f
      ;;                                    odds-diff-f))
 
-     (let [r (ref [])
-           tasks [(fn []
-                    (dosync (alter r conj [{:title "Original Lay Bets" :value (running-total (race-day-lay-results race-days) running-lay-total)}]))
-                    )
-                  (fn []
-                    (prn "bet odds under: " (:bet-odds-under form-params))
-                    (dosync (alter r conj [{:title "New Lay Bets" :value (running-total (race-day-lay-results race-days
-                                                                                                              (finishing-positions
-                                                                                                               (first-race-only)
-                                                                                                               (tips-percent-less-than (:tips-percent form-params))
-                                                                                                               (odds-difference-less-than (:bet-odds-under form-params))
-                                                                                                               )
-                                                                                                              magic-number-f
-                                                                                                              odds-diff-f)  running-lay-total)}]))
-                    )
-                  ]]
+     (def original (future {:title "Original Lay Bets"
+                            :value (running-total (race-day-lay-results race-days) running-lay-total)}))
+
+     (def new (future {:title "New Lay Bets"
+                       :value (running-total (race-day-lay-results race-days
+                                                                   (finishing-positions
+                                                                    (first-race-only)
+                                                                    (tips-percent-less-than (:tips-percent form-params))
+                                                                    (odds-difference-less-than (:bet-odds-under form-params))
+                                                                    )
+                                                                   magic-number-f
+                                                                   odds-diff-f)
+                                             running-lay-total)}))
+     
+     ;; (let [original (atom {})
+     ;;       new (atom {})
+     ;;       tasks [(fn []
+     ;;                (conj @original {:title "Original Lay Bets"
+     ;;                                 :value (running-total (race-day-lay-results race-days) running-lay-total)}))
+     ;;              (fn []
+     ;;                 (conj @new {:title "New Lay Bets"
+     ;;                            :value (running-total (race-day-lay-results race-days
+     ;;                                                                        (finishing-positions
+     ;;                                                                         (first-race-only)
+     ;;                                                                         (tips-percent-less-than (:tips-percent form-params))
+     ;;                                                                         (odds-difference-less-than (:bet-odds-under form-params))
+     ;;                                                                         )
+     ;;                                                                        magic-number-f
+     ;;                                                                        odds-diff-f)  running-lay-total)}))                 
+     ;;              ]]
        ;; (map (fn [mn] (fn [] (dosync (alter r conj [(hash-map :title (str "All bets under " (if (ratio? mn) mn (format "%.2f" mn)))
        ;;                                                     :value (running-total (race-day-lay-results race-days
        ;;                                                                                                 (finishing-positions
@@ -185,13 +228,17 @@
        ;;      (if-not (= "" (:all-under form-params))
        ;;        (conj (magic-number-stages results) (:all-under form-params))
        ;;        (magic-number-stages results))))]
-       (doseq [future (.invokeAll pool tasks)]
-         (.get future))
-       ;;(.shutdown pool)
+       
+     ;; (doseq [future (.invokeAll pool tasks)]
+     ;;   (.get future))
+     ;;(.shutdown pool)
 
-       (page/index (flatten (deref r))
-                   [page/link-back page/link-index]
-                   (partial page/form form-params)))))
+     (println "lay bets page finished...")
+     ;;(println "original: " @original)
+     ;;(println "new: " @new)
+     (page/index [@original @new]
+                 [page/link-back page/link-index]
+                 (partial page/form form-params))))
 
 (defroutes routes
   "url routes for the web app to serve"
@@ -230,7 +277,7 @@
 
 (defn app []
   (-> routes
-;;      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
+      ;;      (wrap-reload '(gg-clj.core gg-clj.app gg-clj.mail gg-clj.web gg-clj.db gg-clj.page))
       wrap-params))
 
 (defn start

@@ -50,6 +50,7 @@
 (defn chart-series
   "produce the series for the chart configuration, produce a different series for each running total passed in"
   [running-totals]
+  (println "running totals: " running-totals)
   (subs-miss-end (apply str
                         (for [running-total running-totals]
                           (str "{
